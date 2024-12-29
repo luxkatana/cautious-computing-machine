@@ -1,0 +1,4 @@
+httpx
+roblox
+py-cord
+python-dotenv
