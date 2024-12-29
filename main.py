@@ -50,7 +50,7 @@ class CancelView(View):
 class AnnouncementView(View):
     def __init__(self, end_time: int, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.timeout = 30 # SET 600
+        self.timeout = 600 # SET 600
         self.original_message: discord.Message = None
         self.lists_of_people_joined: list[discord.Member] = []
         self.end_time = end_time
@@ -93,10 +93,13 @@ class AnnouncementView(View):
         EVENTS: discord.TextChannel = bot.get_channel(EVENTS_CHANNEL)
         guild = self.original_message.guild
         await self.original_message.edit(view=None)
+        if len(self.lists_of_people_joined) < 1:
+            await self.original_message.edit("Cancelled, nobody joined the event..", delete_after=60.0)
+            return 
         
 
         if self.current_helper is None:
-            await self.original_message.reply("Cancelled, there is no helper assigned to this event, next event will be after 30 minutes.",
+            await self.original_message.edit("Cancelled, there is no helper assigned to this event, next event will be after 30 minutes.",
                                               embed=None, delete_after=60.0)
             return
 
@@ -109,7 +112,10 @@ class AnnouncementView(View):
                                                          overwrites=permissions,
                                                          category=(await EVENTS.guild.create_category(name="TRIDENT-EVENT", 
                                                                                                       overwrites=permissions)))
-        await self.original_message.edit(f"Go to <#{channel.id}> for instructions\nNext event will be in 30 minutes", embed=None, view=None, delete_after=60.0)
+        await self.original_message.edit(f"Go to <#{channel.id}> for instructions\nNext event will be in 30 minutes",
+                                         embed=None,
+                                         view=None,
+                                         delete_after=60.0)
         result = "\n".join(map(lambda member: f"<@{member.id}>", self.lists_of_people_joined))
         result = f'||{result}||'
         embed = discord.Embed(title="Welcome adventurers",
