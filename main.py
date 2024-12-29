@@ -1,4 +1,5 @@
-#!/usr/bin/python3
+#!/home/luxkatana/pyenv/bin/python3
+
 from roblox import Client
 import discord
 from discord.ext import commands, tasks
