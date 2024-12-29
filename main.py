@@ -60,8 +60,11 @@ class AnnouncementView(View):
         helper = f"<@{self.current_helper.id}>" if self.current_helper is not None else "Currently no helper, if no helper, then the event will be cancelled."
         embed = discord.Embed(title="Hosting a trident-door-opening!")
         embed.description = "Trident-door will be opened in 10 minutes. React to the buttons"
-        embed.add_field(name="Amount of people", value=f"**{'zero' if amount_of_people == 0 else amount_of_people} people are going to join this event.**", inline=False)
-        embed.add_field(name="Helper", value=helper, inline=False) 
+        embed.add_field(name="Amount of people",
+                        value=f"**{'zero' if amount_of_people == 0 else amount_of_people} people are going to join this event.**",
+                        inline=True)
+        embed.add_field(name="Helper", value=helper, inline=True) 
+        embed.add_field(name="Starting time", value=f"<t:{self.end_time}>", inline=True)
         await self.original_message.edit(embed=embed)
 
     @discord.ui.button(label="Join", style=discord.ButtonStyle.green)
@@ -85,11 +88,14 @@ class AnnouncementView(View):
 
         if self.current_helper is None:
             self.current_helper = interaction.user
+            if self.current_helper in  self.lists_of_people_joined:
+                self.lists_of_people_joined.remove(interaction.user)
             await interaction.response.send_message("Successfully assigned you as helper =)", ephemeral=True)
             await self.update_embed_counting()
         else:
             await interaction.response.send_message("There is already a helper assigned to this event.. Better luck next time!", ephemeral=True)
     async def on_timeout(self) -> None:
+        print("Timeout reached.")
         EVENTS: discord.TextChannel = bot.get_channel(EVENTS_CHANNEL)
         guild = self.original_message.guild
         await self.original_message.edit(view=None)
@@ -107,7 +113,7 @@ class AnnouncementView(View):
         permissions.update({guild.default_role: discord.PermissionOverwrite(read_messages=False)})
 
 
-        channel = await EVENTS.guild.create_text_channel("[JOIN]The trident event", reason="Auto create trident channel",
+        channel = await EVENTS.guild.create_text_channel("JOIN The trident event", reason="Auto create trident channel",
                                                          slowmode_delay=5,
                                                          overwrites=permissions,
                                                          category=(await EVENTS.guild.create_category(name="TRIDENT-EVENT", 
