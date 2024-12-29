@@ -49,7 +49,7 @@ class CancelView(View):
 class AnnouncementView(View):
     def __init__(self, end_time: int, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.timeout = 600
+        self.timeout = 30 # SET 600
         self.original_message: discord.Message = None
         self.lists_of_people_joined: list[discord.Member] = []
         self.end_time = end_time
@@ -65,6 +65,9 @@ class AnnouncementView(View):
 
     @discord.ui.button(label="Join", style=discord.ButtonStyle.green)
     async def reply_to_interactionviews(self, _, interaction: discord.Interaction) -> None:
+        if self.current_helper is not None and self.current_helper.id == interaction.user.id:
+            await interaction.response.send_message("You're the helper, you don't have to join!", ephemeral=True)
+            return
         if interaction.user in self.lists_of_people_joined:
             await interaction.response.send_message(f"You're already in the party.. but be there at <t:{self.end_time}:t>", ephemeral=True)
         else:
@@ -90,12 +93,10 @@ class AnnouncementView(View):
         guild = self.original_message.guild
         await self.original_message.edit(view=None)
         
-        if len(self.lists_of_people_joined) < 1: # WARNING
-            await self.original_message.edit("Cancelled, less people joined the event. Next event will be after 30 minutes.", embed=None)
-            return
 
         if self.current_helper is None:
-            await self.original_message.reply("Cancelled, there is no helper assigned to this event, next event will be after 30 minutes.", embed=None)
+            await self.original_message.reply("Cancelled, there is no helper assigned to this event, next event will be after 30 minutes.",
+                                              embed=None, delete_after=60.0)
             return
 
         permissions = {member: discord.PermissionOverwrite(read_messages=True, send_messages=True) for member in self.lists_of_people_joined + [self.current_helper]}
@@ -107,7 +108,7 @@ class AnnouncementView(View):
                                                          overwrites=permissions,
                                                          category=(await EVENTS.guild.create_category(name="TRIDENT-EVENT", 
                                                                                                       overwrites=permissions)))
-        await self.original_message.edit(f"Go to <#{channel.id}> for instructions\nNext event will be in 30 minutes", embed=None, view=None)
+        await self.original_message.edit(f"Go to <#{channel.id}> for instructions\nNext event will be in 30 minutes", embed=None, view=None, delete_after=60.0)
         result = "\n".join(map(lambda member: f"<@{member.id}>", self.lists_of_people_joined))
         result = f'||{result}||'
         embed = discord.Embed(title="Welcome adventurers",
@@ -136,7 +137,7 @@ async def mainloop() -> None:
     embed.description = "Trident-door will be opened in 10 minutes. React to the buttons"
     embed.add_field(name="Amount of people", value="**zero people are going to join this event.**", inline=True) 
     embed.add_field(name="Helper", value="Currently no helper, if no helper, then the event will be cancelled.", inline=True) 
-    embed.add_field(name="Starting time", value=f"<t:{ending_time}>", inline=False)
+    embed.add_field(name="Starting time", value=f"<t:{ending_time}>", inline=True)
     interactionviews = AnnouncementView(ending_time)
     message = await EVENTS.send(embed=embed, view=interactionviews)
     interactionviews.original_message = message
