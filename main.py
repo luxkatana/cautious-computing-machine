@@ -1,5 +1,6 @@
 #!/home/luxkatana/pyenv/bin/python3
 
+from datetime import datetime, timedelta
 import discord
 from roblox import Client
 from random import choice
@@ -11,6 +12,7 @@ from os import environ
 from time import time
 from discord.ui import View
 from string import digits 
+
 
 async def parse_displayname_by_user(user: discord.Member) -> tuple[bool, str, str]:
     realuser = user.display_name
@@ -29,6 +31,7 @@ TOKEN = environ['TOKEN']
 bot = commands.Bot(intents=discord.Intents.all())
 EVENTS_CHANNEL = 1321622294388412480
 HELPER_ROLE = 1321615619640135731
+TRIDENT_TIME_TO_WAIT_IN_SECS: int = 600 # is 10 minutes
 
 @bot.event
 async def on_ready() -> None:
@@ -47,7 +50,10 @@ async def on_error(exception: Exception, *args, **kwargs) -> None:
 
 
 class CancelView(View):
-    def __init__(self, helper: discord.Member, *args, **kwargs):
+    def __init__(self,
+                 helper: discord.Member,
+                 *args,
+                 **kwargs):
         super().__init__(timeout=None, *args, **kwargs)
         self.helper = helper
 
@@ -70,8 +76,14 @@ class CancelView(View):
 
 class AnnouncementView(View):
     def __init__(self, end_time: int, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.timeout = 600 # SET 600
+        now = datetime.now()
+        later = datetime.fromtimestamp(end_time)
+        later = datetime.strptime(str(later), "%Y-%m-%d %H:%M:%S")
+        later = datetime(later.year, later.month, later.day, later.hour, later.minute, 0)
+        time_to_wait = int((later - now).total_seconds())
+        print("expected stopping:", later)
+        print("RN: ", now)
+        super().__init__(timeout=time_to_wait, *args, **kwargs)
         self.original_message: discord.Message = None
         self.lists_of_people_joined: list[discord.Member] = []
         self.end_time = end_time
@@ -126,8 +138,8 @@ class AnnouncementView(View):
         
 
         if self.current_helper is None:
-            await self.original_message.edit("Cancelled, there is no helper assigned to this event, next event will be after 30 minutes.",
-                                              embed=None, delete_after=60.0)
+            await self.original_message.edit("Cancelled, there is no helper assigned to this event, next event will be after 20 minutes.",
+                                              embed=None, delete_after=20 * 60)
             return
 
         permissions = {member: discord.PermissionOverwrite(read_messages=True, send_messages=True) for member in self.lists_of_people_joined + [self.current_helper]}
@@ -158,12 +170,14 @@ class AnnouncementView(View):
             await channel.send(f"{self.current_helper.mention} couldn't parse your account by username, please run ``/verify`` by bloxlink to set up your username.")
 
 
-        await channel.send(result, view=cancel_view, embed=embed)
+        message = await channel.send(result, view=cancel_view, embed=embed)
+        await message.pin()
+
 
         
 @tasks.loop(minutes=30)
 async def mainloop() -> None:
-    ending_time: int = int(time() + (600))
+    ending_time = int(time() + TRIDENT_TIME_TO_WAIT_IN_SECS)
     EVENTS: discord.TextChannel = bot.get_channel(EVENTS_CHANNEL)
     embed = discord.Embed(title="Hosting a trident-door-opening!")
     embed.description = "Trident-door will be opened in 10 minutes. React to the buttons"
