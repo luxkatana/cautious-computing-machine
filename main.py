@@ -48,11 +48,11 @@ async def on_error(exception: Exception, *args, **kwargs) -> None:
 
 class CancelView(View):
     def __init__(self, helper: discord.Member, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(timeout=None, *args, **kwargs)
         self.helper = helper
 
     
-    @discord.ui.button(label="Delete & finish this event (press this to delete and finish this event)", style=discord.ButtonStyle.red)
+    @discord.ui.button(label="Delete & finish this event (press this to delete and finish this event)", style=discord.ButtonStyle.red, custom_id="delete_btn")
     async def on_finish(self, _, interaction: discord.Interaction) -> None:
         if interaction.user.id != self.helper.id:
             await interaction.response.send_message("This is not for you, this is for the helper!", ephemeral=True)
@@ -141,8 +141,7 @@ class AnnouncementView(View):
         next_time = int(time() + (20 * 60))
         await self.original_message.edit(f"Go to <#{channel.id}> for instructions\nNext event will be <t:{next_time}>",
                                          embed=None,
-                                         view=None,
-                                         delete_after=21 * 60)
+                                         view=None)
         result = "\n".join(map(lambda member: f"<@{member.id}>", self.lists_of_people_joined))
         result = f'||{result}||'
         embed = discord.Embed(title="Welcome adventurers",
@@ -162,7 +161,7 @@ class AnnouncementView(View):
         await channel.send(result, view=cancel_view, embed=embed)
 
         
-@tasks.loop(minutes=10)
+@tasks.loop(minutes=30)
 async def mainloop() -> None:
     ending_time: int = int(time() + (600))
     EVENTS: discord.TextChannel = bot.get_channel(EVENTS_CHANNEL)
