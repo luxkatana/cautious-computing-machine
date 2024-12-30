@@ -76,14 +76,7 @@ class CancelView(View):
 
 class AnnouncementView(View):
     def __init__(self, end_time: int, *args, **kwargs):
-        now = datetime.now()
-        later = datetime.fromtimestamp(end_time)
-        later = datetime.strptime(str(later), "%Y-%m-%d %H:%M:%S")
-        later = datetime(later.year, later.month, later.day, later.hour, later.minute, 0)
-        time_to_wait = int((later - now).total_seconds())
-        print("expected stopping:", later)
-        print("RN: ", now)
-        super().__init__(timeout=time_to_wait, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.original_message: discord.Message = None
         self.lists_of_people_joined: list[discord.Member] = []
         self.end_time = end_time
@@ -127,7 +120,7 @@ class AnnouncementView(View):
             await self.update_embed_counting()
         else:
             await interaction.response.send_message("There is already a helper assigned to this event.. Better luck next time!", ephemeral=True)
-    async def on_timeout(self) -> None:
+    async def go_continue(self) -> None:
         print("Timeout reached.")
         EVENTS: discord.TextChannel = bot.get_channel(EVENTS_CHANNEL)
         guild = self.original_message.guild
@@ -187,6 +180,17 @@ async def mainloop() -> None:
     interactionviews = AnnouncementView(ending_time)
     message = await EVENTS.send(embed=embed, view=interactionviews)
     interactionviews.original_message = message
+
+    later = datetime.strptime(str(datetime.fromtimestamp(ending_time)), "%Y-%m-%d %H:%M:%S") 
+
+    later = datetime(later.year, later.month, later.day, later.hour, later.minute, 0)
+    now = datetime.now()
+    time_to_wait = int((later - now).total_seconds())
+    print("expected stopping:", later)
+    print("RN: ", now)
+    print(f"waiting time: {time_to_wait}")
+    await async_sleep(time_to_wait)
+    await interactionviews.go_continue()
 
 
 bot.run(TOKEN)
