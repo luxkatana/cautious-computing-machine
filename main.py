@@ -1,19 +1,31 @@
 #!/home/luxkatana/pyenv/bin/python3
 
-from roblox import Client
 import discord
+from roblox import Client
+from random import choice
 from discord.ext import commands, tasks
-import httpx
+from traceback import format_exc
 from dotenv import load_dotenv
 from asyncio import sleep as async_sleep
 from os import environ
 from time import time
 from discord.ui import View
+from string import digits 
 
+async def parse_displayname_by_user(user: discord.Member) -> tuple[bool, str, str]:
+    realuser = user.display_name
+    splitted = realuser.split(" (@")
+    if len(splitted) != 2:
+       return (False, "", "")
+    (display, realuser) = (splitted[0], splitted[1][:-1:1])
+
+    return (True, display, realuser)
+
+def generate_nonce(length: int) -> str:
+    return ''.join([choice(digits) for _ in range(length)])
 
 load_dotenv()
 TOKEN = environ['TOKEN']
-BLOXLINK_APIKEY = environ['BLOXLINKAPI']
 bot = commands.Bot(intents=discord.Intents.all())
 EVENTS_CHANNEL = 1321622294388412480
 HELPER_ROLE = 1321615619640135731
@@ -23,6 +35,16 @@ async def on_ready() -> None:
     await bot.change_presence(activity=discord.Game(name="Making events..."))
     print(f"User logged at {bot.user}")
     mainloop.start()
+
+@bot.event
+async def on_error(exception: Exception, *args, **kwargs) -> None:
+    print(args, kwargs)
+    channel = bot.get_channel(1323285527486529627)
+    await channel.send(f"raw exception: {exception}")
+    await channel.send("Exception occured:\n"
+                       f"```{format_exc()}```")
+    raise exception
+
 
 class CancelView(View):
     def __init__(self, helper: discord.Member, *args, **kwargs):
@@ -44,7 +66,6 @@ class CancelView(View):
             
             await async_sleep(10)
             await interaction.channel.delete(reason=f"Event finished, <@{interaction.user.id}> clicked this button")
-            await interaction.channel.category.delete()
 
 
 class AnnouncementView(View):
@@ -113,36 +134,35 @@ class AnnouncementView(View):
         permissions.update({guild.default_role: discord.PermissionOverwrite(read_messages=False)})
 
 
-        channel = await EVENTS.guild.create_text_channel("JOIN The trident event", reason="Auto create trident channel",
+        channel = await EVENTS.guild.create_text_channel(f"JOIN The trident event ({generate_nonce(10)})",
+                                                         reason="Auto create trident channel",
                                                          slowmode_delay=5,
-                                                         overwrites=permissions,
-                                                         category=(await EVENTS.guild.create_category(name="TRIDENT-EVENT", 
-                                                                                                      overwrites=permissions)))
-        await self.original_message.edit(f"Go to <#{channel.id}> for instructions\nNext event will be in 30 minutes",
+                                                         overwrites=permissions)
+        next_time = int(time() + (20 * 60))
+        await self.original_message.edit(f"Go to <#{channel.id}> for instructions\nNext event will be <t:{next_time}>",
                                          embed=None,
                                          view=None,
-                                         delete_after=60.0)
+                                         delete_after=21 * 60)
         result = "\n".join(map(lambda member: f"<@{member.id}>", self.lists_of_people_joined))
         result = f'||{result}||'
         embed = discord.Embed(title="Welcome adventurers",
                               description=f"Welcome, this is the trident-door-opening event. Please do what {self.current_helper.mention} asks you to do", colour=discord.Color.gold())
         cancel_view = CancelView(self.current_helper)
-        async with httpx.AsyncClient() as client:
-            endpoint = f"https://api.blox.link/v4/public/guilds/{self.current_helper.guild.id}/discord-to-roblox/{self.current_helper.id}"
-            response = await client.get(endpoint, headers={"Authorization": BLOXLINK_APIKEY})
-            if response.status_code == 200:
-                response_as_json = response.json()['robloxID']
-                robloxclient: Client = Client()
-                user = await robloxclient.get_user(response_as_json)
-                username = user.display_name or user.name
-                cancel_view.add_item(discord.ui.Button(label=f"Visit {username} on roblox",
-                                                       url=f"https://roblox.com/users/{response_as_json}/profile")) 
+        (status, display, username) = await parse_displayname_by_user(self.current_helper)
+        if status is True:
+            print(display, username)
+            userid = await Client().get_user_by_username(username)
+            userid = userid.id
+            cancel_view.add_item(discord.ui.Button(label=f"Visit {display} on roblox",
+                                                       url=f"https://roblox.com/users/{userid}/profile")) 
+        else:
+            await channel.send(f"{self.current_helper.mention} couldn't parse your account by username, please run ``/verify`` by bloxlink to set up your username.")
 
 
         await channel.send(result, view=cancel_view, embed=embed)
 
         
-@tasks.loop(minutes=30)
+@tasks.loop(minutes=10)
 async def mainloop() -> None:
     ending_time: int = int(time() + (600))
     EVENTS: discord.TextChannel = bot.get_channel(EVENTS_CHANNEL)
