@@ -8,11 +8,13 @@ from discord.ext import commands, tasks
 from traceback import format_exc
 from dotenv import load_dotenv
 from asyncio import sleep as async_sleep
-from os import environ
+from os import environ, remove
 from time import time
 from discord.ui import View
 from string import digits 
 from getmac import get_mac_address
+
+remove("./log.log")
 
 logging.basicConfig(filename="./log.log", filemode="a", level=logging.INFO)
 print = logging.info
