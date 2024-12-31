@@ -130,7 +130,7 @@ class AnnouncementView(View):
 
     @discord.ui.button(label="Join", style=discord.ButtonStyle.green)
     async def reply_to_interactionviews(self, _, interaction: discord.Interaction) -> None:
-        fomat_endtime = f"<t:{self.end_time}"
+        fomat_endtime = f"<t:{self.end_time}>"
         if self.current_helper is not None and self.current_helper.id == interaction.user.id:
             await interaction.response.send_message(f"You're the helper, you don't have to join! Be prepared at {fomat_endtime}", 
                                                     ephemeral=True)
@@ -244,7 +244,7 @@ async def on_member_join(member: discord.Member):
         await member.send(embed=embed, view=timeoutview)
     except Exception:
         general = member.guild.get_channel(1321602258038820939)
-        await general.send(embed=embed, context=f"||{member.mention}||", view=timeoutview)
+        await general.send(embed=embed, content=f"||{member.mention}||", view=timeoutview)
     await async_sleep(10 * 60)
     if timeoutview.done is not True:
         await member.timeout(datetime.now() + timedelta(minutes=10), reason="We made our automated decision to give you a timeout, you didn't agree")
