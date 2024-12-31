@@ -8,23 +8,20 @@ from discord.ext import commands, tasks
 from traceback import format_exc
 from dotenv import load_dotenv
 from asyncio import sleep as async_sleep
-from os import environ, remove
+from os import environ
 from time import time
 from discord.ui import View
 from string import digits 
 from getmac import get_mac_address
 
-remove("./log.log")
-
-logging.basicConfig(filename="./log.log", filemode="a", level=logging.INFO)
 print = logging.info
 def production_server() -> bool:
     mac_addr = get_mac_address()
     if mac_addr == "da:9e:a5:bb:dd:a2":
         print("Running the bot on a production server")
-        return False
+        return True
     print("Running the bot on a debug server")
-    return True
+    return False
 
 
 
@@ -42,7 +39,7 @@ async def parse_displayname_by_user(user: discord.Member) -> tuple[bool, str, st
 load_dotenv()
 TOKEN = environ['TOKEN']
 bot = commands.Bot(intents=discord.Intents.all())
-EVENTS_CHANNEL = 1321817091099197580
+EVENTS_CHANNEL = 1321622294388412480
 HELPER_ROLE = 1321615619640135731
 TRIDENT_TIME_TO_WAIT_IN_SECS: int = 600 # is 10 minutes
 if production_server() is not True:
@@ -54,12 +51,6 @@ if production_server() is not True:
 async def on_ready() -> None:
     await bot.change_presence(activity=discord.Game(name="Making events..."))
     print(f"User logged at {bot.user}")
-    if production_server() is True:
-        async for message in bot.get_channel(1321622294388412480).history():
-            message: discord.Message
-            if message.author.bot:
-                await message.delete(message="Bot startup in production")
-        print("Cleanup finish")
     mainloop.start()
 
 @bot.event
@@ -132,7 +123,7 @@ class AnnouncementView(View):
             await interaction.response.send_message(f"Joined, be there at  <t:{self.end_time}:t>", ephemeral=True)
             await self.update_embed_counting()
 
-    @discord.ui.button("See who is going to join", style=discord.ButtonStyle.secondary, custom_id="list_users")
+    @discord.ui.button(label="See who is going to join", style=discord.ButtonStyle.secondary, custom_id="list_users")
     async def list_users(self, _, interaction: discord.Interaction) -> None:
         if len(self.lists_of_people_joined) == 0:
             await interaction.response.send_message("This event is empty...", ephemeral=True)
