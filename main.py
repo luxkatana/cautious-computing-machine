@@ -54,6 +54,12 @@ if production_server() is not True:
 async def on_ready() -> None:
     await bot.change_presence(activity=discord.Game(name="Making events..."))
     print(f"User logged at {bot.user}")
+    if production_server() is True:
+        async for message in bot.get_channel(1321622294388412480).history():
+            message: discord.Message
+            if message.author.bot:
+                await message.delete(message="Bot startup in production")
+        print("Cleanup finish")
     mainloop.start()
 
 @bot.event
@@ -125,6 +131,14 @@ class AnnouncementView(View):
             self.lists_of_people_joined.append(interaction.user)
             await interaction.response.send_message(f"Joined, be there at  <t:{self.end_time}:t>", ephemeral=True)
             await self.update_embed_counting()
+
+    @discord.ui.button("See who is going to join", style=discord.ButtonStyle.secondary, custom_id="list_users")
+    async def list_users(self, _, interaction: discord.Interaction) -> None:
+        if len(self.lists_of_people_joined) == 0:
+            await interaction.response.send_message("This event is empty...", ephemeral=True)
+        else:
+            result = "\n* ".join([user.mention for user in self.lists_of_people_joined])
+            await interaction.response.send_message(result, ephemeral=True)
 
     @discord.ui.button(label="Become helper", style=discord.ButtonStyle.grey)
     async def become_helper(self, _, interaction: discord.Interaction) -> None:
