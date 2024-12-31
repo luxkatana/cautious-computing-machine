@@ -1,8 +1,8 @@
 #!/home/luxkatana/pyenv/bin/python3
-
-from datetime import datetime, timedelta
+from datetime import datetime
 import discord
 from roblox import Client
+import logging
 from random import choice
 from discord.ext import commands, tasks
 from traceback import format_exc
@@ -12,26 +12,41 @@ from os import environ
 from time import time
 from discord.ui import View
 from string import digits 
+from getmac import get_mac_address
+
+logging.basicConfig(filename="./log.log", filemode="a", level=logging.INFO)
+print = logging.info
+def production_server() -> bool:
+    mac_addr = get_mac_address()
+    if mac_addr == "da:9e:a5:bb:dd:a2":
+        print("Running the bot on a production server")
+        return False
+    print("Running the bot on a debug server")
+    return True
 
 
-async def parse_displayname_by_user(user: discord.Member) -> tuple[bool, str, str]:
-    realuser = user.display_name
-    splitted = realuser.split(" (@")
-    if len(splitted) != 2:
-       return (False, "", "")
-    (display, realuser) = (splitted[0], splitted[1][:-1:1])
-
-    return (True, display, realuser)
 
 def generate_nonce(length: int) -> str:
     return ''.join([choice(digits) for _ in range(length)])
 
+async def parse_displayname_by_user(user: discord.Member) -> tuple[bool, str, str]:
+    splitted = user.display_name.split(" (@")
+    if len(splitted) != 2:
+        return (False, "", "")
+    display, realuser = splitted[0], splitted[1][:-1:]
+    return (True, display, realuser)
+
+
 load_dotenv()
 TOKEN = environ['TOKEN']
 bot = commands.Bot(intents=discord.Intents.all())
-EVENTS_CHANNEL = 1321622294388412480
+EVENTS_CHANNEL = 1321817091099197580
 HELPER_ROLE = 1321615619640135731
 TRIDENT_TIME_TO_WAIT_IN_SECS: int = 600 # is 10 minutes
+if production_server() is not True:
+    EVENTS_CHANNEL = 1321817091099197580
+    HELPER_ROLE = 1321860390765727936
+
 
 @bot.event
 async def on_ready() -> None:
@@ -41,7 +56,6 @@ async def on_ready() -> None:
 
 @bot.event
 async def on_error(exception: Exception, *args, **kwargs) -> None:
-    print(args, kwargs)
     channel = bot.get_channel(1323285527486529627)
     await channel.send(f"raw exception: {exception}")
     await channel.send("Exception occured:\n"
@@ -86,8 +100,13 @@ class AnnouncementView(View):
         helper = f"<@{self.current_helper.id}>" if self.current_helper is not None else "Currently no helper, if no helper, then the event will be cancelled."
         embed = discord.Embed(title="Hosting a trident-door-opening!")
         embed.description = "Trident-door will be opened in 10 minutes. React to the buttons"
+        grammar = f"{amount_of_people} people are going to join this event"
+        if amount_of_people == 0:
+            grammar = "Zero people are going to join this event"
+        elif amount_of_people == 1:
+            grammar = "1 Person is going to join this event"
         embed.add_field(name="Amount of people",
-                        value=f"**{'zero' if amount_of_people == 0 else amount_of_people} people are going to join this event.**",
+                        value=f"**{grammar}.**",
                         inline=True)
         embed.add_field(name="Helper", value=helper, inline=True) 
         embed.add_field(name="Starting time", value=f"<t:{self.end_time}>", inline=True)
@@ -121,7 +140,6 @@ class AnnouncementView(View):
         else:
             await interaction.response.send_message("There is already a helper assigned to this event.. Better luck next time!", ephemeral=True)
     async def go_continue(self) -> None:
-        print("Timeout reached.")
         EVENTS: discord.TextChannel = bot.get_channel(EVENTS_CHANNEL)
         guild = self.original_message.guild
         await self.original_message.edit(view=None)
@@ -131,7 +149,7 @@ class AnnouncementView(View):
         
 
         if self.current_helper is None:
-            await self.original_message.edit("Cancelled, there is no helper assigned to this event, next event will be after 20 minutes.",
+            await self.original_message.edit(f"Cancelled, there is no helper assigned to this event, next event will be <t:{int(time() + 1200)}>",
                                               embed=None, delete_after=20 * 60)
             return
 
@@ -146,7 +164,7 @@ class AnnouncementView(View):
         next_time = int(time() + (20 * 60))
         await self.original_message.edit(f"Go to <#{channel.id}> for instructions\nNext event will be <t:{next_time}>",
                                          embed=None,
-                                         view=None)
+                                         view=None, delete_after=60 * 20)
         result = "\n".join(map(lambda member: f"<@{member.id}>", self.lists_of_people_joined))
         result = f'||{result}||'
         embed = discord.Embed(title="Welcome adventurers",
@@ -154,7 +172,6 @@ class AnnouncementView(View):
         cancel_view = CancelView(self.current_helper)
         (status, display, username) = await parse_displayname_by_user(self.current_helper)
         if status is True:
-            print(display, username)
             userid = await Client().get_user_by_username(username)
             userid = userid.id
             cancel_view.add_item(discord.ui.Button(label=f"Visit {display} on roblox",
@@ -172,13 +189,14 @@ class AnnouncementView(View):
 async def mainloop() -> None:
     ending_time = int(time() + TRIDENT_TIME_TO_WAIT_IN_SECS)
     EVENTS: discord.TextChannel = bot.get_channel(EVENTS_CHANNEL)
+
     embed = discord.Embed(title="Hosting a trident-door-opening!")
     embed.description = "Trident-door will be opened in 10 minutes. React to the buttons"
-    embed.add_field(name="Amount of people", value="**zero people are going to join this event.**", inline=True) 
+    embed.add_field(name="Amount of people", value="**Zero people are going to join this event.**", inline=True) 
     embed.add_field(name="Helper", value="Currently no helper, if no helper, then the event will be cancelled.", inline=True) 
     embed.add_field(name="Starting time", value=f"<t:{ending_time}>", inline=True)
     interactionviews = AnnouncementView(ending_time)
-    message = await EVENTS.send(embed=embed, view=interactionviews)
+    message = await EVENTS.send(embed=embed, view=interactionviews, content="||<@&1321786602778787870>||")
     interactionviews.original_message = message
 
     later = datetime.strptime(str(datetime.fromtimestamp(ending_time)), "%Y-%m-%d %H:%M:%S") 
@@ -186,8 +204,8 @@ async def mainloop() -> None:
     later = datetime(later.year, later.month, later.day, later.hour, later.minute, 0)
     now = datetime.now()
     time_to_wait = int((later - now).total_seconds())
-    print("expected stopping:", later)
-    print("RN: ", now)
+    print(f"expected stopping: {later}")
+    print(f"RN: {now}")
     print(f"waiting time: {time_to_wait}")
     await async_sleep(time_to_wait)
     await interactionviews.go_continue()
