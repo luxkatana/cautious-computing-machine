@@ -30,7 +30,7 @@ async def parse_displayname_by_user(user: discord.Member) -> tuple[bool, str, st
 
 load_dotenv()
 TOKEN = environ['TOKEN']
-bot = commands.Bot(intents=discord.Intents.all(), guild_ids=[1321602258038820936])
+bot = commands.Bot(intents=discord.Intents.all(), debug_guilds=[1321602258038820936])
 EVENTS_CHANNEL = 1321622294388412480
 HELPER_ROLE = 1321615619640135731
 TRIDENT_TIME_TO_WAIT_IN_SECS: int = 600 # is 10 minutes
