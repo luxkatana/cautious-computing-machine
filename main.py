@@ -35,7 +35,7 @@ TOKEN = environ['TOKEN']
 bot = commands.Bot(intents=discord.Intents.all(), debug_guilds=[1321602258038820936], command_prefix="./")
 EVENTS_CHANNEL = 1321622294388412480
 HELPER_ROLE = 1321615619640135731
-TRIDENT_TIME_TO_WAIT_IN_SECS: int = 600 # is 10 minutes
+TRIDENT_TIME_TO_WAIT_IN_SECS: int = 15 * 60 
 SEARCHING_FOR_HELPERS = True
 
 
@@ -257,13 +257,13 @@ class AnnouncementView(View):
         await message.pin()
 
         
-@tasks.loop(minutes=30)
+@tasks.loop(minutes=45)
 async def mainloop() -> None:
     ending_time = int(time() + TRIDENT_TIME_TO_WAIT_IN_SECS)
     EVENTS: discord.TextChannel = bot.get_channel(EVENTS_CHANNEL)
 
     embed = discord.Embed(title="Hosting a trident-door-opening!")
-    embed.description = "Trident-door will be opened in 10 minutes. React to the buttons"
+    embed.description = f"Trident-door will be opened in {TRIDENT_TIME_TO_WAIT_IN_SECS / 60} minutes. React to the buttons"
     embed.add_field(name="Amount of people", value="**Zero people are going to join this event.**", inline=True) 
     embed.add_field(name="Helper", value="Currently no helper, if no helper, then the event will be cancelled.", inline=True) 
     embed.add_field(name="Starting time", value=f"<t:{ending_time}>", inline=True)
