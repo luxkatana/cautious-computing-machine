@@ -1,6 +1,5 @@
 #!/home/luxkatana/pyenv/bin/python3
 from datetime import datetime
-from threading import ExceptHookArgs
 import discord
 from roblox import Client
 import logging
@@ -222,8 +221,8 @@ class AnnouncementView(View):
         
 
         if self.current_helper is None:
-            await self.original_message.edit(f"Cancelled, there is no helper assigned to this event, next event will be <t:{int(time() + 1200)}>",
-                                              embed=None, delete_after=20 * 60)
+            await self.original_message.edit(f"Cancelled, there is no helper assigned to this event, next event will be <t:{int(time() + 30 * 60)}>",
+                                              embed=None, delete_after=30 * 60)
             return
 
         permissions = {member: discord.PermissionOverwrite(read_messages=True, send_messages=True) for member in self.lists_of_people_joined + [self.current_helper]}
@@ -234,10 +233,10 @@ class AnnouncementView(View):
                                                          reason="Auto create trident channel",
                                                          slowmode_delay=5,
                                                          overwrites=permissions)
-        next_time = int(time() + (20 * 60))
+        next_time = int(time() + (30 * 60))
         await self.original_message.edit(f"Go to <#{channel.id}> for instructions\nNext event will be <t:{next_time}>",
                                          embed=None,
-                                         view=None, delete_after=60 * 20)
+                                         view=None, delete_after=60 * 30)
         result = "\n".join(map(lambda member: f"<@{member.id}>", self.lists_of_people_joined))
         result = f'||{result}||'
         embed = discord.Embed(title="Welcome adventurers",
