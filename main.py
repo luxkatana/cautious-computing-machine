@@ -1,5 +1,6 @@
 #!/home/luxkatana/pyenv/bin/python3
 from datetime import datetime
+from threading import ExceptHookArgs
 import discord
 from roblox import Client
 import logging
@@ -30,7 +31,7 @@ async def parse_displayname_by_user(user: discord.Member) -> tuple[bool, str, st
 
 load_dotenv()
 TOKEN = environ['TOKEN']
-bot = commands.Bot(intents=discord.Intents.all(), debug_guilds=[1321602258038820936])
+bot = commands.Bot(intents=discord.Intents.all(), debug_guilds=[1321602258038820936], command_prefix="./")
 EVENTS_CHANNEL = 1321622294388412480
 HELPER_ROLE = 1321615619640135731
 TRIDENT_TIME_TO_WAIT_IN_SECS: int = 600 # is 10 minutes
@@ -351,6 +352,19 @@ async def apply_as_helper(ctx: discord.ApplicationContext, image: discord.Attach
         await ctx.response.send_message(
                 "Cool, thanks for applying as a helper, we're gonna make our decision later (you might get a DM or get mentioned by me)!",
                                         ephemeral=True)
+
+@bot.command(name="cleartest")
+async def cleartest(ctx: commands.Context):
+    msg = await ctx.send("oioioi")
+
+    try:
+        for number in range(2, 100):
+            await msg.edit(str(number))
+    except Exception as e:
+        print(str(e))
+        
+        await msg.send(format_exc())
+
 
 bot.run(TOKEN)
 
