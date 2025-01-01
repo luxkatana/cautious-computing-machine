@@ -117,9 +117,9 @@ async def on_message(message: discord.Message):
             abracadabra remove channel
             ''').lower().rstrip().strip()
     if message.author.id in [714149216787628075, 719072157229121579] and message.content.lower() == thick_of_it:
-        await message.reply("OMG I HATE THIS NUMBER I AM JUST GONNA DELETE THIS CHANNEL IN 10 SECONDS!!!11!!")
+        await message.reply("Your wish is my command.")
         await async_sleep(10.0)
-        await message.channel.delete(reason="Dumb ahh number")
+        await message.channel.delete(reason="Genius")
 
     await bot.process_commands(message)
 
