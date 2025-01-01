@@ -126,6 +126,7 @@ class AnnouncementView(View):
                         inline=True)
         embed.add_field(name="Helper", value=helper, inline=True) 
         embed.add_field(name="Starting time", value=f"<t:{self.end_time}>", inline=True)
+        embed.add_field(name="Requirements", value="* 150K (for Trident rod)\n* 5 enchant relics (optional)", inline=True)
         await self.original_message.edit(embed=embed)
 
     @discord.ui.button(label="Join", style=discord.ButtonStyle.green)
@@ -135,6 +136,14 @@ class AnnouncementView(View):
             await interaction.response.send_message(f"You're the helper, you don't have to join! Be prepared at {fomat_endtime}", 
                                                     ephemeral=True)
             return
+        HELPER_G_ROLE = interaction.guild.get_role(HELPER_ROLE)
+        if HELPER_G_ROLE in interaction.user.roles:
+            await interaction.response.send_message(embed=discord.Embed(
+                title="Failed",
+                description="As a helper, you can't join an event, but you can claim one"), ephemeral=True)
+            return
+
+
         if interaction.user in self.lists_of_people_joined:
             embed = discord.Embed(title="You are already in the party",
                                   description=
@@ -218,39 +227,6 @@ class AnnouncementView(View):
         message = await channel.send(result, view=cancel_view, embed=embed)
         await message.pin()
 
-class AgreeView(View):
-    def __init__(self, user: discord.Member):
-        super().__init__(disable_on_timeout=True, timeout=None)
-        self.user = user
-        self.done = False
-    @discord.ui.button(label="I agree that I am going to read the faq, and the rules", style=discord.ButtonStyle.green, custom_id="agreement")
-    async def reply_to_this(self, _, interaction: discord.Interaction):
-        if interaction.user.id != self.user.id:
-            await interaction.response.send_message("Not for you", ephemeral=True)
-        else:
-            await interaction.response.send_message("Good boy", ephemeral=True)
-            self.done = True
-            await self.stop()
-
-    
-
-@bot.event
-async def on_member_join(member: discord.Member):
-    embed = discord.Embed(title="Welcome!", description=f"Welcome to {member.guild.name} please verify your account in <#1322929979297628213> and see the guide in <#1323633658766032896>")
-    embed.set_footer(text="Please note that we're going to give you a timeout if you don't reply to this message in 10 minutes.")
-    timeoutview = AgreeView(member)
-
-    try:
-        await member.send(embed=embed, view=timeoutview)
-    except Exception:
-        general = member.guild.get_channel(1321602258038820939)
-        await general.send(embed=embed, content=f"||{member.mention}||", view=timeoutview)
-    await async_sleep(10 * 60)
-    if timeoutview.done is not True:
-        await member.timeout(datetime.now() + timedelta(minutes=10), reason="We made our automated decision to give you a timeout, you didn't agree")
-
-
-
         
 @tasks.loop(minutes=30)
 async def mainloop() -> None:
@@ -262,6 +238,7 @@ async def mainloop() -> None:
     embed.add_field(name="Amount of people", value="**Zero people are going to join this event.**", inline=True) 
     embed.add_field(name="Helper", value="Currently no helper, if no helper, then the event will be cancelled.", inline=True) 
     embed.add_field(name="Starting time", value=f"<t:{ending_time}>", inline=True)
+    embed.add_field(name="Requirements", value="* 150K (for Trident rod)\n* 5 enchant relics (optional)", inline=True)
     interactionviews = AnnouncementView(ending_time)
     message = await EVENTS.send(embed=embed, view=interactionviews, content="||<@&1321786602778787870>||")
     interactionviews.original_message = message
