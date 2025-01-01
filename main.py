@@ -30,10 +30,11 @@ async def parse_displayname_by_user(user: discord.Member) -> tuple[bool, str, st
 
 load_dotenv()
 TOKEN = environ['TOKEN']
-bot = commands.Bot(intents=discord.Intents.all())
+bot = commands.Bot(intents=discord.Intents.all(), guild_ids=[1321602258038820936])
 EVENTS_CHANNEL = 1321622294388412480
 HELPER_ROLE = 1321615619640135731
 TRIDENT_TIME_TO_WAIT_IN_SECS: int = 600 # is 10 minutes
+SEARCHING_FOR_HELPERS = False
 
 
 @bot.event
@@ -251,6 +252,83 @@ async def mainloop() -> None:
     await async_sleep(time_to_wait)
     await interactionviews.go_continue()
 
+
+class AppealModal(discord.ui.Modal):
+    def __init__(self, solicitor: discord.Member) -> None:
+        self.solicitor = solicitor
+        super().__init__(title="Rejection modal", timeout=None, custom_id="rejection_modal")
+        self.add_item(discord.ui.InputText(style=discord.InputTextStyle.short,
+                                           custom_id="status",
+                                           label="Reject or Accept",
+                                           placeholder="Enter only reject or accept",
+                                           max_length=6,
+                                           min_length=5,
+                                           required=True))
+
+
+        self.add_item(discord.ui.InputText(style=discord.InputTextStyle.long, 
+                                           custom_id="Reason for rejection (leave empty if accept)", 
+                                           label="Why the rejection?", 
+                                           placeholder="Because ...", 
+                                           min_length=10,
+                                           max_length=200,
+                                           required=False, value="aaaaaaaaaaa"))
+    async def callback(self, interaction: discord.Interaction):
+        status, reason = self.children
+        if status.value.lower() == "accept":
+            helper_role = interaction.guild.get_role(HELPER_ROLE)
+            try:
+                await self.solicitor.add_roles(helper_role, reason=f"Accepted by {interaction.user}")
+            except Exception:
+                await interaction.response.send_message(f"Couldn't give role to {self.solicitor.mention}, please give it manually.")
+            else:
+                await interaction.response.send_message(f"Success, welcome {self.solicitor.mention} to the team!")
+        else:
+            await interaction.response.send_message(f"Sent rejection to {self.solicitor.mention}", ephemeral=True)
+            try:
+                if reason.value == "aaaaaaaaaaa":
+                    await self.solicitor.send("You've been rejected for the helper application, sorry!")
+                else:
+                    await self.solicitor.send(f"You've been rejected or this helper application, sorry!\nReason: ```{reason.value}```")
+            except Exception:
+                GENERAL_CHAT = bot.get_channel(1321602258038820939)
+                if reason.value == "aaaaaaaaaaa":
+                    await GENERAL_CHAT.send("You've been rejected for the helper application, sorry!")
+                else:
+                    await GENERAL_CHAT.send(f"You've been rejected for the helper application, sorry!\nReason: ```{reason.value}```")
+
+
+
+class ApplyHelperView(View):
+    def __init__(self, solicitor: discord.Member, original_message: discord.Message):
+        self.solicitor = solicitor    
+        self.message = original_message
+        super().__init__(timeout=None)
+    @discord.ui.button(label="Review", style=discord.ButtonStyle.grey, custom_id="review_btn")
+    async def review(self, _, interaction: discord.Interaction):
+        if interaction.user.id not in [714149216787628075, 719072157229121579]:
+            await interaction.response.send_message("Not for you, for the owners", ephemeral=True)
+        else:
+            modal = AppealModal(self.solicitor)
+            await interaction.response.send_modal(modal)
+
+
+@bot.slash_command(name="apply_as_helper", description="Apply as helper, file must be a picture of ")
+async def apply_as_helper(ctx: discord.ApplicationContext, image: discord.Attachment) -> None:
+    if ctx.author.guild.get_role(HELPER_ROLE) in ctx.author.roles:
+        await ctx.respond("You are a helper.", ephemeral=True)
+    elif SEARCHING_FOR_HELPERS is False:
+        await ctx.respond("Helper applications are closed.", ephemeral=True)
+    else:
+        STAFF_CHAT = await ctx.guild.get_channel(1323056105835991050)
+
+        embed = discord.Embed(title=f"{ctx.author.name} is applying for helper", description=f"{ctx.author.mention} is applying as a helper")
+        embed.set_image(url=f"attachment://{image.filename}")
+        applyview = ApplyHelperView(ctx.author)
+        await STAFF_CHAT.send(embed=embed, file=image, view=applyview)
+        await ctx.response.send_message(
+                "Cool, thanks for applying as a helper, we're gonna make our decision later (you might get a DM or get mentioned by me)!",
+                                        ephemeral=True)
 
 bot.run(TOKEN)
 
