@@ -1,4 +1,3 @@
 roblox
 py-cord
 python-dotenv
-getmac

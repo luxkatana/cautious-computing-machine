@@ -1,5 +1,5 @@
 #!/home/luxkatana/pyenv/bin/python3
-from datetime import datetime, timedelta
+from datetime import datetime
 import discord
 from roblox import Client
 import logging
@@ -12,17 +12,9 @@ from os import environ
 from time import time
 from discord.ui import View
 from string import digits 
-from getmac import get_mac_address
 
 print = logging.info
-def production_server() -> bool:
-    mac_addr = get_mac_address()
-    if mac_addr == "da:9e:a5:bb:dd:a2":
-        print("Running the bot on a production server")
-        return True
-    print("Running the bot on a debug server")
-    return False
-
+logging.basicConfig(filename="./log.log", filemode="a", level=logging.INFO)
 
 
 def generate_nonce(length: int) -> str:
@@ -42,21 +34,26 @@ bot = commands.Bot(intents=discord.Intents.all())
 EVENTS_CHANNEL = 1321622294388412480
 HELPER_ROLE = 1321615619640135731
 TRIDENT_TIME_TO_WAIT_IN_SECS: int = 600 # is 10 minutes
-if production_server() is not True:
-    EVENTS_CHANNEL = 1321817091099197580
-    HELPER_ROLE = 1321860390765727936
 
 
 @bot.event
 async def on_ready() -> None:
     await bot.change_presence(activity=discord.Game(name="Making events..."))
     print(f"User logged at {bot.user}")
+    channel = await bot.fetch_channel(EVENTS_CHANNEL)
+    if channel is None:
+        print("Couldn't clean")
+    async for message in channel.history():
+       if message.author.id == bot.user.id:
+            await message.delete(reason="Startup")
+
+
+    await channel.send(embed=discord.Embed(title="Bot cleanup", description="Beep boop started"))
     mainloop.start()
 
 @bot.event
 async def on_error(exception: Exception, *args, **kwargs) -> None:
     channel = bot.get_channel(1323285527486529627)
-    await channel.send(f"raw exception: {exception}")
     await channel.send("Exception occured:\n"
                        f"```{format_exc()}```")
     raise exception
