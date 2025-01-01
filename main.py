@@ -14,6 +14,7 @@ from time import time
 from discord.ui import View
 from string import digits 
 
+
 print = logging.info
 logging.basicConfig(filename="./log.log", filemode="a", level=logging.INFO)
 
@@ -189,6 +190,13 @@ class AnnouncementView(View):
             result = f"* {result}"
             await interaction.response.send_message(result, ephemeral=True)
 
+    async def on_timeout(self) -> None:
+        print("I AM ON TIMEOUT")
+    async def on_error(error, item, interaction):
+        await interaction.response.send_message("EH??")
+        print(error)
+        print(item)
+
     @discord.ui.button(label="Become helper", style=discord.ButtonStyle.grey)
     async def become_helper(self, _, interaction: discord.Interaction) -> None:
         role = interaction.guild.get_role(HELPER_ROLE)
@@ -343,7 +351,7 @@ async def apply_as_helper(ctx: discord.ApplicationContext, image: discord.Attach
     elif SEARCHING_FOR_HELPERS is False:
         await ctx.respond("Helper applications are closed.", ephemeral=True)
     else:
-        STAFF_CHAT = await ctx.guild.get_channel(1323056105835991050)
+        STAFF_CHAT = ctx.guild.get_channel(1323056105835991050)
 
         embed = discord.Embed(title=f"{ctx.author.name} is applying for helper", description=f"{ctx.author.mention} is applying as a helper")
         embed.set_image(url=f"attachment://{image.filename}")
@@ -352,18 +360,6 @@ async def apply_as_helper(ctx: discord.ApplicationContext, image: discord.Attach
         await ctx.response.send_message(
                 "Cool, thanks for applying as a helper, we're gonna make our decision later (you might get a DM or get mentioned by me)!",
                                         ephemeral=True)
-
-@bot.command(name="cleartest")
-async def cleartest(ctx: commands.Context):
-    msg = await ctx.send("oioioi")
-
-    try:
-        for number in range(2, 100):
-            await msg.edit(str(number))
-    except Exception as e:
-        print(str(e))
-        
-        await msg.send(format_exc())
 
 
 bot.run(TOKEN)
