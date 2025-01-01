@@ -136,7 +136,7 @@ class AnnouncementView(View):
         amount_of_people = len(self.lists_of_people_joined)
         helper = f"<@{self.current_helper.id}>" if self.current_helper is not None else "Currently no helper, if no helper, then the event will be cancelled."
         embed = discord.Embed(title="Hosting a trident-door-opening!")
-        embed.description = "Trident-door will be opened in 10 minutes. React to the buttons"
+        embed.description = "Trident-door will be opened in 15 minutes. React to the buttons"
         grammar = f"{amount_of_people} people are going to join this event"
         if amount_of_people == 0:
             grammar = "Zero people are going to join this event"
