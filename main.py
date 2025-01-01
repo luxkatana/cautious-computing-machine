@@ -47,7 +47,7 @@ async def on_ready() -> None:
     if channel is None:
         print("Couldn't clean")
     async for message in channel.history():
-       if message.author.id == bot.user.id:
+       if message.author.id == bot.user.id or message.webhook_id is not None:
             await message.delete(reason="Startup")
 
 
