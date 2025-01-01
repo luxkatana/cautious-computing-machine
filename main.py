@@ -59,6 +59,16 @@ async def on_error(exception: Exception, *args, **kwargs) -> None:
                        f"```{format_exc()}```")
     raise exception
 
+@bot.event
+async def on_application_command_error(
+    ctx: discord.ApplicationContext, 
+    exception: Exception):
+    await ctx.respond("Error occured while applying", ephemeral=True)
+    channel = bot.get_channel(1323285527486529627)
+    await channel.send(f"raw: {exception}")
+    await channel.send("Exception occured:\n"
+                       f"```{format_exc()}```")
+
 
 class CancelView(View):
     def __init__(self,
@@ -100,6 +110,17 @@ class CancelView(View):
             embed.set_footer(text="I rage quited while helping people, some don't know the language")
             await interaction.response.send_message(embed=embed, ephemeral=True)
 
+@bot.event
+async def on_message(message: discord.Message):
+    thick_of_it = (
+            '''
+            from the screen to the ring to the bed to the king
+            ''').lower().rstrip().strip()
+    if message.author.id in [714149216787628075, 719072157229121579] and message.content.lower() == thick_of_it:
+        await message.reply("OMG I HATE THIS NUMBER I AM JUST GONNA DELETE THIS CHANNEL IN 10 SECONDS!!!11!!")
+        await async_sleep(10.0)
+
+    await bot.process_commands(message)
 
 
 class AnnouncementView(View):
