@@ -321,7 +321,7 @@ async def resolve_broken_cancel_views() -> None:
         older_embed_description = pinned_msg.embeds[0].description
         result = regex_search(r"<@(\d+)>", older_embed_description)
         if result:
-            view = CancelView(bot.get_user(int(result)))
+            view = CancelView(bot.get_user(int(result.group(1))))
             await pinned_msg.edit(view=view)
             await pinned_msg.reply("Beep boop") 
 
