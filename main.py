@@ -140,9 +140,10 @@ async def remove_channel(ctx: discord.ApplicationContext):
 
 @bot.event
 async def on_message(message: discord.Message):
-    if message.guild is None:
+    if message.guild is None or isinstance(message.author, discord.User):
         await bot.process_commands(message)
         return
+
     thick_of_it = (
             '''
             abracadabra remove channel
