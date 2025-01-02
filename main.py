@@ -31,27 +31,12 @@ async def parse_displayname_by_user(user: discord.Member) -> tuple[bool, str, st
 
 load_dotenv()
 TOKEN = environ['TOKEN']
-bot = commands.Bot(intents=discord.Intents.all(), debug_guilds=[1321602258038820936], command_prefix="./")
+bot = commands.Bot(intents=discord.Intents.all(), debug_guilds=[1321602258038820936]) 
 EVENTS_CHANNEL = 1321622294388412480
 HELPER_ROLE = 1321615619640135731
 TRIDENT_TIME_TO_WAIT_IN_SECS: int = 15 * 60 
-SEARCHING_FOR_HELPERS = True
 
 
-@bot.event
-async def on_ready() -> None:
-    await bot.change_presence(activity=discord.Game(name="Making events..."))
-    print(f"User logged at {bot.user}")
-    channel = await bot.fetch_channel(EVENTS_CHANNEL)
-    if channel is None:
-        print("Couldn't clean")
-    async for message in channel.history():
-       if message.author.id == bot.user.id or message.webhook_id is not None:
-            await message.delete(reason="Startup")
-
-
-    await channel.send(embed=discord.Embed(title="Bot cleanup", description="Beep boop started"))
-    mainloop.start()
 
 @bot.event
 async def on_error(exception: Exception, *args, **kwargs) -> None:
@@ -110,6 +95,30 @@ class CancelView(View):
             embed.add_field(name="Got questions?", value="Sure, go ahead and ping one of the owners.", inline=False)
             embed.set_footer(text="I rage quited while helping people, some don't know the language")
             await interaction.response.send_message(embed=embed, ephemeral=True)
+
+
+'''@bot.slash_command(name="delete channel", description="Use this command if the bot is not replying")
+async def remove_channel(ctx: discord.ApplicationContext):
+    role: discord.Role = ctx.guild.get_role(HELPER_ROLE)
+    if role in ctx.author.roles:
+        if ctx.channel.name.startswith("join-the-trident"):
+            embed = discord.Embed(title="This event has been marked as finished, this event will be deleted after 10 seconds", 
+                                  description="Have fun with your trident! Make sure to invite people to this server!", 
+                                  color=discord.Colour.yellow())
+            embed.add_field(name="Want to become a helper?", value="Contact an admin. Full desolete deep bestiary is required", inline=False)
+            embed.set_footer(text="Please make sure to thank the helper for his help!")
+
+            await ctx.respond("Deleting after 10 seconds. Thank you for your service!", ephemeral=True)
+            await ctx.channel.send(embed=embed)
+            await async_sleep(10)
+            await ctx.channel.delete(reason=f"Event finished, <@{ctx.author.id}> deleted by using delete command")
+
+        else:
+            await ctx.respond("This is not a trident-channel!!!!", ephemeral=True)
+    else:
+        await ctx.respond("You don't have the permissions to do this", ephemeral=True)'''
+    
+
 
 @bot.event
 async def on_message(message: discord.Message):
@@ -262,7 +271,7 @@ async def mainloop() -> None:
     EVENTS: discord.TextChannel = bot.get_channel(EVENTS_CHANNEL)
 
     embed = discord.Embed(title="Hosting a trident-door-opening!")
-    embed.description = f"Trident-door will be opened in {TRIDENT_TIME_TO_WAIT_IN_SECS / 60} minutes. React to the buttons"
+    embed.description = f"Trident-door will be opened in {TRIDENT_TIME_TO_WAIT_IN_SECS / 60:.0f} minutes. React to the buttons"
     embed.add_field(name="Amount of people", value="**Zero people are going to join this event.**", inline=True) 
     embed.add_field(name="Helper", value="Currently no helper, if no helper, then the event will be cancelled.", inline=True) 
     embed.add_field(name="Starting time", value=f"<t:{ending_time}>", inline=True)
@@ -282,84 +291,22 @@ async def mainloop() -> None:
     await async_sleep(time_to_wait)
     await interactionviews.go_continue()
 
-
-class AppealModal(discord.ui.Modal):
-    def __init__(self, solicitor: discord.Member) -> None:
-        self.solicitor = solicitor
-        super().__init__(title="Rejection modal", timeout=None, custom_id="rejection_modal")
-        self.add_item(discord.ui.InputText(style=discord.InputTextStyle.short,
-                                           custom_id="status",
-                                           label="Reject or Accept",
-                                           placeholder="Enter only reject or accept",
-                                           max_length=6,
-                                           min_length=5,
-                                           required=True))
-
-
-        self.add_item(discord.ui.InputText(style=discord.InputTextStyle.long, 
-                                           custom_id="Reason for rejection (leave empty if accept)", 
-                                           label="Why the rejection?", 
-                                           placeholder="Because ...", 
-                                           min_length=10,
-                                           max_length=200,
-                                           required=False, value="aaaaaaaaaaa"))
-    async def callback(self, interaction: discord.Interaction):
-        status, reason = self.children
-        if status.value.lower() == "accept":
-            helper_role = interaction.guild.get_role(HELPER_ROLE)
-            try:
-                await self.solicitor.add_roles(helper_role, reason=f"Accepted by {interaction.user}")
-            except Exception:
-                await interaction.response.send_message(f"Couldn't give role to {self.solicitor.mention}, please give it manually.")
-            else:
-                await interaction.response.send_message(f"Success, welcome {self.solicitor.mention} to the team!")
-        else:
-            await interaction.response.send_message(f"Sent rejection to {self.solicitor.mention}", ephemeral=True)
-            try:
-                if reason.value == "aaaaaaaaaaa":
-                    await self.solicitor.send("You've been rejected for the helper application, sorry!")
-                else:
-                    await self.solicitor.send(f"You've been rejected or this helper application, sorry!\nReason: ```{reason.value}```")
-            except Exception:
-                GENERAL_CHAT = bot.get_channel(1321602258038820939)
-                if reason.value == "aaaaaaaaaaa":
-                    await GENERAL_CHAT.send("You've been rejected for the helper application, sorry!")
-                else:
-                    await GENERAL_CHAT.send(f"You've been rejected for the helper application, sorry!\nReason: ```{reason.value}```")
+@bot.event
+async def on_ready() -> None:
+    await bot.change_presence(activity=discord.Game(name="Making events..."))
+    print(f"User logged at {bot.user}")
+    channel = await bot.fetch_channel(EVENTS_CHANNEL)
+    if channel is None:
+        print("Couldn't clean")
+    webhook_found: bool = False
+    async for message in channel.history(oldest_first=True):
+       if message.author.id == bot.user.id or (message.webhook_id is not None and webhook_found is False):
+           webhook_found = True
+           await message.delete(reason="Startup")
 
 
-
-class ApplyHelperView(View):
-    def __init__(self, solicitor: discord.Member, original_message: discord.Message):
-        self.solicitor = solicitor    
-        self.message = original_message
-        super().__init__(timeout=None)
-    @discord.ui.button(label="Review", style=discord.ButtonStyle.grey, custom_id="review_btn")
-    async def review(self, _, interaction: discord.Interaction):
-        if interaction.user.id not in [714149216787628075, 719072157229121579]:
-            await interaction.response.send_message("Not for you, for the owners", ephemeral=True)
-        else:
-            modal = AppealModal(self.solicitor)
-            await interaction.response.send_modal(modal)
-
-
-@bot.slash_command(name="apply_as_helper", description="Apply as helper, file must be a picture of ")
-async def apply_as_helper(ctx: discord.ApplicationContext, image: discord.Attachment) -> None:
-    if ctx.author.guild.get_role(HELPER_ROLE) in ctx.author.roles:
-        await ctx.respond("You are a helper.", ephemeral=True)
-    elif SEARCHING_FOR_HELPERS is False:
-        await ctx.respond("Helper applications are closed.", ephemeral=True)
-    else:
-        STAFF_CHAT = ctx.guild.get_channel(1323056105835991050)
-
-        embed = discord.Embed(title=f"{ctx.author.name} is applying for helper", description=f"{ctx.author.mention} is applying as a helper")
-        embed.set_image(url=f"attachment://{image.filename}")
-        applyview = ApplyHelperView(ctx.author)
-        await STAFF_CHAT.send(embed=embed, file=image, view=applyview)
-        await ctx.response.send_message(
-                "Cool, thanks for applying as a helper, we're gonna make our decision later (you might get a DM or get mentioned by me)!",
-                                        ephemeral=True)
-
+    await channel.send(embed=discord.Embed(title="Bot cleanup", description="Beep boop started"))
+    mainloop.start()
 
 bot.run(TOKEN)
 
