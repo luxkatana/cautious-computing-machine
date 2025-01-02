@@ -49,7 +49,7 @@ def build_default_embed(ending_time: int,
     DEFAULT_EMBED.description = f"Become a participant for the trident door event in {TRIDENT_TIME_TO_WAIT_IN_SECS / 60:.0f} minutes. React to the buttons below"
     DEFAULT_EMBED.add_field(name="Amount of people", value=f"**{grammar}**", inline=True) 
     DEFAULT_EMBED.add_field(name="Helper", value="Currently no helper, if no helper, then the event will be cancelled."\
-            if helper is None else f"<@{helper.id} ({helper.name})", inline=True) 
+            if helper is None else f"<@{helper.id}> ({helper.name})", inline=True) 
     DEFAULT_EMBED.add_field(name="Starting time", value=f"<t:{ending_time}:t>", inline=True)
     DEFAULT_EMBED.add_field(name="Requirements", value="* **150K (for Trident rod)**\n* **5 enchant relics**", inline=True)
     return DEFAULT_EMBED
