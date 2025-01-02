@@ -16,8 +16,16 @@ from string import digits
 
 
 print = logging.info
-logging.basicConfig(filename="./log.log", filemode="a", level=logging.INFO, format="%(name)s :: %(levelname)-8s :: %(message)s")
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+handler = logging.FileHandler("log.log")
+handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
+logging.getLogger().setLevel(logging.ERROR)
+logging.getLogger("discord").setLevel(logging.ERROR)
 
 def generate_nonce(length: int) -> str:
     return ''.join([choice(digits) for _ in range(length)])
