@@ -308,8 +308,8 @@ async def mainloop() -> None:
 
 @bot.event
 async def on_ready() -> None:
-    bot.add_view(AnnouncementView)
-    bot.add_view(CancelView)
+    bot.add_view(AnnouncementView(0))
+    bot.add_view(CancelView(None))
     await bot.change_presence(activity=discord.Game(name="Making events..."))
     print(f"User logged at {bot.user}")
     channel = await bot.fetch_channel(EVENTS_CHANNEL)
