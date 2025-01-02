@@ -1,6 +1,7 @@
 #!/home/luxkatana/pyenv/bin/python3
 from datetime import datetime
 import discord
+from re import search as regex_search
 from roblox import Client
 import logging
 from random import choice
@@ -42,12 +43,12 @@ def build_default_embed(ending_time: int,
         grammar = "Zero people are going to join this event"
     elif amount_of_people == 1:
         grammar = "1 Person is gting a trident-door-opening!"
-    DEFAULT_EMBED = discord.Embed(title="Hosle} people are going to join this event")
-    DEFAULT_EMBED.description = f"Become a participant for the trident door event in {TRIDENT_TIME_TO_WAIT_IN_SECS / 60:.0f} minutes. React to the buttons"
+    DEFAULT_EMBED = discord.Embed(title="Hosting a trident door opening event, read <#1323633658766032896>")
+    DEFAULT_EMBED.description = f"Become a participant for the trident door event in {TRIDENT_TIME_TO_WAIT_IN_SECS / 60:.0f} minutes. React to the buttons below"
     DEFAULT_EMBED.add_field(name="Amount of people", value=f"**{grammar}**", inline=True) 
     DEFAULT_EMBED.add_field(name="Helper", value="Currently no helper, if no helper, then the event will be cancelled.", inline=True) 
     DEFAULT_EMBED.add_field(name="Starting time", value=f"<t:{ending_time}:t>", inline=True)
-    DEFAULT_EMBED.add_field(name="Requirements", value="* 150K (for Trident rod)\n* 5 enchant relics (optional)", inline=True)
+    DEFAULT_EMBED.add_field(name="Requirements", value="* **150K (for Trident rod)**\n* **5 enchant relics**", inline=True)
     return DEFAULT_EMBED
 
 
@@ -86,7 +87,6 @@ class CancelView(View):
         else:
             embed = discord.Embed(title="This event has been marked as finished, this event will be deleted after 10 seconds", 
                                   description="Have fun with your trident! Make sure to invite people to this server!", color=discord.Colour.yellow())
-            embed.add_field(name="Want to become a helper?", value="Contact an admin. Full desolate deep bestiary is required", inline=False)
             embed.set_footer(text=f"Please make sure to thank {self.helper.display_name} for his help!")
             await interaction.response.send_message("Deleting after 10 seconds. Thank you for your service!", ephemeral=True)
             await interaction.channel.send(embed=embed)
@@ -119,7 +119,7 @@ async def remove_channel(ctx: discord.ApplicationContext):
             embed = discord.Embed(title="This event has been marked as finished, this event will be deleted after 10 seconds", 
                                   description="Have fun with your trident! Make sure to invite people to this server!", 
                                   color=discord.Colour.yellow())
-            embed.add_field(name="Want to become a helper?", value="Contact an admin. Full desolete deep bestiary is required", inline=False)
+            embed.add_field(name="Want to become a helper?", value="Contact an admin. Full desolate deep bestiary is required", inline=False)
             embed.set_footer(text="Please make sure to thank the helper for his help!")
 
             await ctx.respond("Deleting after 10 seconds. Thank you for your service!", ephemeral=True)
@@ -141,42 +141,35 @@ async def on_message(message: discord.Message):
             '''
             abracadabra remove channel
             ''').lower().rstrip().strip()
-    if message.author.id in [714149216787628075, 719072157229121579] and message.content.lower() == thick_of_it:
-        await message.reply("Your wish is my command.")
-        await async_sleep(10.0)
-        await message.channel.delete(reason="Genius")
+    if message.role.id in [714149216787628075, 719072157229121579] and message.content.lower() == thick_of_it:
+        embed = discord.Embed(title="This event has been marked as finished, this event will be deleted after 10 seconds", 
+                              description="Have fun with your trident! Make sure to invite people to this server!", 
+                              color=discord.Colour.random())
+        embed.set_footer(text="Please make sure to thank the helper for his help!")
+
+        await message.channel.send(embed=embed)
+        await async_sleep(10)
+        await message.channel.delete(reason=f"Event finished, <@{message.author.id}> deleted by using delete command")
 
     await bot.process_commands(message)
 
 
 class AnnouncementView(View):
-    def __init__(self, end_time: int, *args, **kwargs):
-        super().__init__(timeout=None, *args, **kwargs)
+    def __init__(self, end_time: int):
+        super().__init__(timeout=None)
         self.original_message: discord.Message = None
         self.lists_of_people_joined: list[discord.Member] = []
         self.end_time = end_time
         self.current_helper: discord.Member = None
+
     async def update_embed_counting(self) -> None:
-        amount_of_people = len(self.lists_of_people_joined)
-        helper = f"<@{self.current_helper.id}>" if self.current_helper is not None else "Currently no helper, if no helper, then the event will be cancelled."
-        embed = discord.Embed(title="Hosting a trident-door-opening!")
-        embed.description = "Trident-door will be opened in 15 minutes. React to the buttons"
-        grammar = f"{amount_of_people} people are going to join this event"
-        if amount_of_people == 0:
-            grammar = "Zero people are going to join this event"
-        elif amount_of_people == 1:
-            grammar = "1 Person is going to join this event"
-        embed.add_field(name="Amount of people",
-                        value=f"**{grammar}.**",
-                        inline=True)
-        embed.add_field(name="Helper", value=helper, inline=True) 
-        embed.add_field(name="Starting time", value=f"<t:{self.end_time}>", inline=True)
-        embed.add_field(name="Requirements", value="* 150K (for Trident rod)\n* 5 enchant relics (optional)", inline=True)
+        await async_sleep(1.0)
+        embed = build_default_embed(self.end_time, len(self.lists_of_people_joined))
         await self.original_message.edit(embed=embed)
 
     @discord.ui.button(label="Join", style=discord.ButtonStyle.green, custom_id="join_btn")
     async def reply_to_interactionviews(self, _, interaction: discord.Interaction) -> None:
-        fomat_endtime = f"<t:{self.end_time}>"
+        fomat_endtime = f"<t:{self.end_time}:t>"
         if self.current_helper is not None and self.current_helper.id == interaction.user.id:
             await interaction.response.send_message(f"You're the helper, you don't have to join! Be prepared at {fomat_endtime}", 
                                                     ephemeral=True)
@@ -245,7 +238,7 @@ class AnnouncementView(View):
         
 
         if self.current_helper is None:
-            await self.original_message.edit(f"Cancelled, there is no helper assigned to this event, next event will be <t:{int(time() + 30 * 60)}>",
+            await self.original_message.edit(f"Cancelled, there is no helper assigned to this event, next event will be <t:{int(time() + 30 * 60)}:t>",
                                               embed=None, delete_after=30 * 60)
             return
 
@@ -258,7 +251,7 @@ class AnnouncementView(View):
                                                          slowmode_delay=5,
                                                          overwrites=permissions)
         next_time = int(time() + (30 * 60))
-        await self.original_message.edit(f"Go to <#{channel.id}> for instructions\nNext event will be <t:{next_time}>",
+        await self.original_message.edit(f"Go to <#{channel.id}> for instructions\nNext event will be <t:{next_time}:t>",
                                          embed=None,
                                          view=None, delete_after=60 * 30)
         result = "\n".join(map(lambda member: f"<@{member.id}>", self.lists_of_people_joined))
@@ -284,13 +277,8 @@ class AnnouncementView(View):
 async def mainloop() -> None:
     ending_time = int(time() + TRIDENT_TIME_TO_WAIT_IN_SECS)
     EVENTS: discord.TextChannel = bot.get_channel(EVENTS_CHANNEL)
+    embed = build_default_embed(ending_time, 0)
 
-    embed = discord.Embed(title="Hosting a trident-door-opening!")
-    embed.description = f"Trident-door will be opened in {TRIDENT_TIME_TO_WAIT_IN_SECS / 60:.0f} minutes. React to the buttons"
-    embed.add_field(name="Amount of people", value="**Zero people are going to join this event.**", inline=True) 
-    embed.add_field(name="Helper", value="Currently no helper, if no helper, then the event will be cancelled.", inline=True) 
-    embed.add_field(name="Starting time", value=f"<t:{ending_time}>", inline=True)
-    embed.add_field(name="Requirements", value="* 150K (for Trident rod)\n* 5 enchant relics (optional)", inline=True)
     interactionviews = AnnouncementView(ending_time)
     message = await EVENTS.send(embed=embed, view=interactionviews, content="||<@&1321786602778787870>||")
     interactionviews.original_message = message
@@ -306,11 +294,28 @@ async def mainloop() -> None:
     await async_sleep(time_to_wait)
     await interactionviews.go_continue()
 
+async def resolve_broken_cancel_views() -> None:
+    guild = bot.get_guild(1321602258038820936)
+    channels: tuple[discord.TextChannel, ...] = tuple(filter(lambda j: j.name.startswith("join-the-trident"), guild.channels))
+    for channel in channels:
+        pinned_msg = await channel.pins()
+        if len(pinned_msg) != 1:
+            continue
+        pinned_msg: discord.Message = pinned_msg[0]
+        older_embed_description = pinned_msg.embeds[0].description
+        result = regex_search(r"<@(\d+)>", older_embed_description)
+        if result:
+            view = CancelView(bot.get_user(int(result)))
+            await pinned_msg.edit(view=view)
+            await pinned_msg.reply("Beep boop") 
+
+
 @bot.event
 async def on_ready() -> None:
     bot.add_view(AnnouncementView(0))
     bot.add_view(CancelView(None))
     await bot.change_presence(activity=discord.Game(name="Making events..."))
+    await resolve_broken_cancel_views()
     print(f"User logged at {bot.user}")
     channel = await bot.fetch_channel(EVENTS_CHANNEL)
     if channel is None:
