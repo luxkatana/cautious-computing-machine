@@ -141,7 +141,7 @@ async def on_message(message: discord.Message):
             '''
             abracadabra remove channel
             ''').lower().rstrip().strip()
-    if message.role.id in [714149216787628075, 719072157229121579] and message.content.lower() == thick_of_it:
+    if bot.get_role(HELPER_ROLE) in message.author.roles and message.content.lower() == thick_of_it:
         embed = discord.Embed(title="This event has been marked as finished, this event will be deleted after 10 seconds", 
                               description="Have fun with your trident! Make sure to invite people to this server!", 
                               color=discord.Colour.random())
