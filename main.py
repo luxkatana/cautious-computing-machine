@@ -35,6 +35,20 @@ bot = commands.Bot(intents=discord.Intents.all(), debug_guilds=[1321602258038820
 EVENTS_CHANNEL = 1321622294388412480
 HELPER_ROLE = 1321615619640135731
 TRIDENT_TIME_TO_WAIT_IN_SECS: int = 15 * 60 
+def build_default_embed(ending_time: int,
+                        amount_of_people: int=0) -> discord.Embed:
+    grammar = f"{amount_of_people} people are going to join this event"
+    if amount_of_people == 0:
+        grammar = "Zero people are going to join this event"
+    elif amount_of_people == 1:
+        grammar = "1 Person is gting a trident-door-opening!"
+    DEFAULT_EMBED = discord.Embed(title="Hosle} people are going to join this event")
+    DEFAULT_EMBED.description = f"Become a participant for the trident door event in {TRIDENT_TIME_TO_WAIT_IN_SECS / 60:.0f} minutes. React to the buttons"
+    DEFAULT_EMBED.add_field(name="Amount of people", value=f"**{grammar}**", inline=True) 
+    DEFAULT_EMBED.add_field(name="Helper", value="Currently no helper, if no helper, then the event will be cancelled.", inline=True) 
+    DEFAULT_EMBED.add_field(name="Starting time", value=f"<t:{ending_time}:t>", inline=True)
+    DEFAULT_EMBED.add_field(name="Requirements", value="* 150K (for Trident rod)\n* 5 enchant relics (optional)", inline=True)
+    return DEFAULT_EMBED
 
 
 
@@ -72,7 +86,7 @@ class CancelView(View):
         else:
             embed = discord.Embed(title="This event has been marked as finished, this event will be deleted after 10 seconds", 
                                   description="Have fun with your trident! Make sure to invite people to this server!", color=discord.Colour.yellow())
-            embed.add_field(name="Want to become a helper?", value="Contact an admin. Full desolete deep bestiary is required", inline=False)
+            embed.add_field(name="Want to become a helper?", value="Contact an admin. Full desolate deep bestiary is required", inline=False)
             embed.set_footer(text=f"Please make sure to thank {self.helper.display_name} for his help!")
             await interaction.response.send_message("Deleting after 10 seconds. Thank you for your service!", ephemeral=True)
             await interaction.channel.send(embed=embed)
@@ -118,6 +132,7 @@ async def remove_channel(ctx: discord.ApplicationContext):
     else:
         await ctx.respond("You don't have the permissions to do this", ephemeral=True)'''
     
+
 
 
 @bot.event
@@ -293,6 +308,8 @@ async def mainloop() -> None:
 
 @bot.event
 async def on_ready() -> None:
+    bot.add_view(AnnouncementView)
+    bot.add_view(CancelView)
     await bot.change_presence(activity=discord.Game(name="Making events..."))
     print(f"User logged at {bot.user}")
     channel = await bot.fetch_channel(EVENTS_CHANNEL)
