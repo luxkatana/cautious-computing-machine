@@ -136,7 +136,7 @@ async def on_message(message: discord.Message):
 
 class AnnouncementView(View):
     def __init__(self, end_time: int, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(timeout=None, *args, **kwargs)
         self.original_message: discord.Message = None
         self.lists_of_people_joined: list[discord.Member] = []
         self.end_time = end_time
@@ -159,7 +159,7 @@ class AnnouncementView(View):
         embed.add_field(name="Requirements", value="* 150K (for Trident rod)\n* 5 enchant relics (optional)", inline=True)
         await self.original_message.edit(embed=embed)
 
-    @discord.ui.button(label="Join", style=discord.ButtonStyle.green)
+    @discord.ui.button(label="Join", style=discord.ButtonStyle.green, custom_id="join_btn")
     async def reply_to_interactionviews(self, _, interaction: discord.Interaction) -> None:
         fomat_endtime = f"<t:{self.end_time}>"
         if self.current_helper is not None and self.current_helper.id == interaction.user.id:
@@ -205,7 +205,7 @@ class AnnouncementView(View):
         print(error)
         print(item)
 
-    @discord.ui.button(label="Become helper", style=discord.ButtonStyle.grey)
+    @discord.ui.button(label="Become helper", style=discord.ButtonStyle.grey, custom_id="become_helper_btn")
     async def become_helper(self, _, interaction: discord.Interaction) -> None:
         role = interaction.guild.get_role(HELPER_ROLE)
         if role not in interaction.user.roles:
