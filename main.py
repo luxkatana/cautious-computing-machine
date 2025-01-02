@@ -16,7 +16,7 @@ from string import digits
 
 
 print = logging.info
-logging.basicConfig(filename="./log.log", filemode="a", level=logging.INFO)
+logging.basicConfig(filename="./log.log", filemode="a", level=logging.INFO, format="%(name)s :: %(levelname)-8s :: %(message)s")
 
 
 def generate_nonce(length: int) -> str:
@@ -37,7 +37,9 @@ EVENTS_CHANNEL = 1321622294388412480
 HELPER_ROLE = 1321615619640135731
 TRIDENT_TIME_TO_WAIT_IN_SECS: int = 15 * 60 
 def build_default_embed(ending_time: int,
-                        amount_of_people: int=0) -> discord.Embed:
+                        amount_of_people: int=0,
+                        helper: discord.Member=None) -> discord.Embed:
+
     grammar = f"{amount_of_people} people are going to join this event"
     if amount_of_people == 0:
         grammar = "Zero people are going to join this event"
@@ -46,7 +48,8 @@ def build_default_embed(ending_time: int,
     DEFAULT_EMBED = discord.Embed(title="Hosting a trident door opening event, read <#1323633658766032896>")
     DEFAULT_EMBED.description = f"Become a participant for the trident door event in {TRIDENT_TIME_TO_WAIT_IN_SECS / 60:.0f} minutes. React to the buttons below"
     DEFAULT_EMBED.add_field(name="Amount of people", value=f"**{grammar}**", inline=True) 
-    DEFAULT_EMBED.add_field(name="Helper", value="Currently no helper, if no helper, then the event will be cancelled.", inline=True) 
+    DEFAULT_EMBED.add_field(name="Helper", value="Currently no helper, if no helper, then the event will be cancelled."\
+            if helper is None else f"<@{helper.id} ({helper.name})", inline=True) 
     DEFAULT_EMBED.add_field(name="Starting time", value=f"<t:{ending_time}:t>", inline=True)
     DEFAULT_EMBED.add_field(name="Requirements", value="* **150K (for Trident rod)**\n* **5 enchant relics**", inline=True)
     return DEFAULT_EMBED
@@ -137,11 +140,14 @@ async def remove_channel(ctx: discord.ApplicationContext):
 
 @bot.event
 async def on_message(message: discord.Message):
+    if message.guild is None:
+        await bot.process_commands(message)
+        return
     thick_of_it = (
             '''
             abracadabra remove channel
             ''').lower().rstrip().strip()
-    if message.guild.get_role(HELPER_ROLE) in message.author.roles and message.content.lower() == thick_of_it and \
+    if message.content.lower() == thick_of_it and message.guild.get_role(HELPER_ROLE) in message.author.roles and \
             message.channel.name.startswith("join-the-trident"):
         embed = discord.Embed(title="This event has been marked as finished, this event will be deleted after 10 seconds", 
                               description="Have fun with your trident! Make sure to invite people to this server!", 
@@ -165,7 +171,7 @@ class AnnouncementView(View):
 
     async def update_embed_counting(self) -> None:
         await async_sleep(1.0)
-        embed = build_default_embed(self.end_time, len(self.lists_of_people_joined))
+        embed = build_default_embed(self.end_time, len(self.lists_of_people_joined), self.current_helper)
         await self.original_message.edit(embed=embed)
 
     @discord.ui.button(label="Join", style=discord.ButtonStyle.green, custom_id="join_btn")
