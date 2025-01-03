@@ -13,6 +13,7 @@ from os import environ
 from time import time
 from discord.ui import View
 from string import digits 
+from notify_update import notify_user
 
 
 print = logging.info
@@ -336,13 +337,13 @@ async def on_ready() -> None:
     channel = await bot.fetch_channel(EVENTS_CHANNEL)
     if channel is None:
         print("Couldn't clean")
-    webhook_found: bool = False
     async for message in channel.history(oldest_first=True):
-       if message.author.id == bot.user.id or (message.webhook_id is not None and webhook_found is False):
-           webhook_found = True
+       if message.author.id == bot.user.id or message.webhook_id is not None:
+
            await message.delete(reason="Startup")
 
 
+    await notify_user()
     await channel.send(embed=discord.Embed(title="Bot cleanup", description="Beep boop started"))
     mainloop.start()
 
@@ -351,10 +352,11 @@ async def read_logs(ctx: discord.ApplicationContext):
     if ctx.author.id not in [714149216787628075, 719072157229121579]:
         await ctx.respond("Not for you", ephemeral=True)
         return
+    await ctx.defer()
     try:
         with open("./log.log", 'r') as file:
             data = file.read()
-            await ctx.respond(data)
+        await ctx.respond(data)
 
 
     except Exception:
