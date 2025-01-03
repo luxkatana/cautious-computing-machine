@@ -346,7 +346,7 @@ async def on_ready() -> None:
     await channel.send(embed=discord.Embed(title="Bot cleanup", description="Beep boop started"))
     mainloop.start()
 
-@bot.slash_command(name="Seelogs", description="Read logger handler")
+@bot.slash_command(name="seelogs", description="Read logger handler")
 async def read_logs(ctx: discord.ApplicationContext):
     if ctx.author.id not in [714149216787628075, 719072157229121579]:
         await ctx.respond("Not for you", ephemeral=True)
