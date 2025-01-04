@@ -93,7 +93,7 @@ class CancelView(View):
         self.helper = helper
 
     
-    @discord.ui.button(label="Assign trident success for users")
+    @discord.ui.button(label="Assign trident success for users", custom_id="assign_to_btn")
     async def assign(self, _, interaction: discord.Interaction):
         if interaction.user.id != self.helper.id or interaction.user.id == 714149216787628075:
             await interaction.response.send_message("Not for you", ephemeral=True)
