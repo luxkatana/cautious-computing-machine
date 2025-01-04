@@ -232,6 +232,10 @@ class AnnouncementView(View):
     @discord.ui.button(label="Join", style=discord.ButtonStyle.green, custom_id="join_btn")
     async def reply_to_interactionviews(self, _, interaction: discord.Interaction) -> None:
         fomat_endtime = f"<t:{self.end_time}:t>"
+        if interaction.guild.get_role(1325150669568610335) in interaction.user.roles:
+            await interaction.response.send_message("You already have the trident, why bother joining?", ephemeral=True)
+            return
+
         if self.current_helper is not None and self.current_helper.id == interaction.user.id:
             await interaction.response.send_message(f"You're the helper, you don't have to join! Be prepared at {fomat_endtime}", 
                                                     ephemeral=True)
