@@ -93,9 +93,9 @@ class CancelView(View):
         self.helper = helper
 
     
-    @discord.ui.button(label="Assign trident success for users", custom_id="assign_to_btn")
+    @discord.ui.button(label="Assign trident role for users (required)", custom_id="assign_to_btn")
     async def assign(self, _, interaction: discord.Interaction):
-        if interaction.user.id != self.helper.id or interaction.user.id == 714149216787628075:
+        if interaction.user.id != self.helper.id:
             await interaction.response.send_message("Not for you", ephemeral=True)
             return
 
@@ -251,14 +251,14 @@ class AnnouncementView(View):
         if interaction.user in self.lists_of_people_joined:
             embed = discord.Embed(title="You are already in the party",
                                   description=
-                                  f"Be there at {fomat_endtime}, I will make a channel later after 10 minutes. You'll get pinged by me")
+                                  f"Be there at {fomat_endtime}, I will make a channel later after 15 minutes. You'll get pinged by me")
             embed.color = discord.Color.gold()
             await interaction.response.send_message(embed=embed, ephemeral=True)
         else:
             self.lists_of_people_joined.append(interaction.user)
             embed = discord.Embed(title="Joined",
                                   description=
-                                  f"Be there at {fomat_endtime}, I will make a channel later after 10 minutes. You'll get pinged by me")
+                                  f"Be there at {fomat_endtime}, I will make a channel later after 15 minutes. You'll get pinged by me")
             embed.color = discord.Color.blue()
             await interaction.response.send_message(embed=embed, ephemeral=True)
             await self.update_embed_counting()
