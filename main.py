@@ -16,7 +16,6 @@ from string import digits
 from notify_update import notify_user
 
 
-print = logging.info
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 handler = logging.FileHandler("log.log")
@@ -24,9 +23,10 @@ handler.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-
 logging.getLogger().setLevel(logging.ERROR)
 logging.getLogger("discord").setLevel(logging.ERROR)
+
+print = logger.info
 
 def generate_nonce(length: int) -> str:
     return ''.join([choice(digits) for _ in range(length)])
@@ -43,6 +43,7 @@ load_dotenv()
 TOKEN = environ['TOKEN']
 bot = commands.Bot(intents=discord.Intents.all(), debug_guilds=[1321602258038820936]) 
 EVENTS_CHANNEL = 1321622294388412480
+HAS_TRIDENT_ROLE: int = 1325150669568610335
 HELPER_ROLE = 1321615619640135731
 TRIDENT_TIME_TO_WAIT_IN_SECS: int = 15 * 60 
 def build_default_embed(ending_time: int,
@@ -53,7 +54,7 @@ def build_default_embed(ending_time: int,
     if amount_of_people == 0:
         grammar = "Zero people are going to join this event"
     elif amount_of_people == 1:
-        grammar = "1 Person is gting a trident-door-opening!"
+        grammar = "1 Person is going to join this event"
     DEFAULT_EMBED = discord.Embed(title="Hosting a trident door opening event, read <#1323633658766032896>")
     DEFAULT_EMBED.description = f"Become a participant for the trident door event in {TRIDENT_TIME_TO_WAIT_IN_SECS / 60:.0f} minutes. React to the buttons below"
     DEFAULT_EMBED.add_field(name="Amount of people", value=f"**{grammar}**", inline=True) 
@@ -92,6 +93,43 @@ class CancelView(View):
         self.helper = helper
 
     
+    @discord.ui.button(label="Assign trident success for users")
+    async def assign(self, _, interaction: discord.Interaction):
+        if interaction.user.id != self.helper.id or interaction.user.id == 714149216787628075:
+            await interaction.response.send_message("Not for you", ephemeral=True)
+            return
+
+        def is_a_normal_member(user: discord.Member) -> bool:
+            helper_role = interaction.guild.get_role(HELPER_ROLE)
+            return (helper_role not in user.roles) and (user.id not in [714149216787628075, 719072157229121579])
+            
+
+
+        users = tuple(filter(is_a_normal_member, interaction.channel.members))
+        if len(users) == 0:
+            await interaction.response.send_mssage("Something aint right, 0 members!1!!?", ephemeral=True)
+            return
+        normalview = discord.ui.View(timeout=500)
+        if len(users) > 25:
+            users = users[:24:]
+
+        for user in users:
+            btn = discord.ui.Button(label=f"{user.display_name}", style=discord.ButtonStyle.grey)
+            async def assign(interaction: discord.Interaction):
+                HAS_TRIDENT_OBJ = interaction.guild.get_role(HAS_TRIDENT_ROLE)
+                await user.add_roles(HAS_TRIDENT_OBJ)
+                await interaction.response.send_message("Assigned", ephemeral=True)
+            btn.callback = assign
+            normalview.add_item(btn)
+        if len(users) > 25:
+            await interaction.response.send_message("Please note that you have to click one more time after this", 
+                                                    view=normalview, 
+                                                    ephemeral=True)
+        else:
+            await interaction.response.send_message("Alright, click to assign the trident role", view=normalview, ephemeral=True)
+
+
+
     @discord.ui.button(label="Delete & finish this event (press this to delete and finish this event)", style=discord.ButtonStyle.red, custom_id="delete_btn")
     async def on_finish(self, _, interaction: discord.Interaction) -> None:
         if interaction.user.id != self.helper.id:
@@ -179,6 +217,13 @@ class AnnouncementView(View):
         self.end_time = end_time
         self.current_helper: discord.Member = None
 
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if self.end_time == 0:
+            await interaction.response.send_message("Currently applying an update, please wait!", ephemeral=True)
+            return False
+        return True
+
+            
     async def update_embed_counting(self) -> None:
         await async_sleep(1.0)
         embed = build_default_embed(self.end_time, len(self.lists_of_people_joined), self.current_helper)
