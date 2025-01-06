@@ -101,14 +101,11 @@ class CancelView(View):
 
         def is_a_normal_member(user: discord.Member) -> bool:
             helper_role = interaction.guild.get_role(HELPER_ROLE)
-            return (helper_role not in user.roles) and (user.id not in [714149216787628075, 719072157229121579])
+            return (helper_role not in user.roles) and (user.id not in [714149216787628075, 719072157229121579]) and user.bot is False
             
 
 
-        print(interaction.channel)
-        print(interaction.channel.name)
-        print(interaction.channel.members)
-        users = tuple(filter(is_a_normal_member, interaction.channel.members))
+        users = tuple(filter(is_a_normal_member, interaction.guild.get_channel(interaction.channel_id).members))
         if len(users) == 0:
             await interaction.response.send_message("Something aint right, 0 members!1!!?", ephemeral=True)
             return
@@ -121,7 +118,7 @@ class CancelView(View):
             async def assign(interaction: discord.Interaction):
                 HAS_TRIDENT_OBJ = interaction.guild.get_role(HAS_TRIDENT_ROLE)
                 await user.add_roles(HAS_TRIDENT_OBJ, reason="assign role complete")
-                await interaction.response.send_message("Assigned", ephemeral=True)
+                await interaction.response.send_message(f"Assigned for {user.mention}", ephemeral=True)
             btn.callback = assign
             normalview.add_item(btn)
         if len(users) > 25:
@@ -395,9 +392,13 @@ async def on_ready() -> None:
            await message.delete(reason="Startup")
 
 
+    print("TODO: MAINLOOP IS SKIPPED")
+    return
     await notify_user()
     await channel.send(embed=discord.Embed(title="Bot cleanup", description="Beep boop started"))
     mainloop.start()
+
+
 
 @bot.slash_command(name="seelogs", description="Read logger handler")
 async def read_logs(ctx: discord.ApplicationContext):
