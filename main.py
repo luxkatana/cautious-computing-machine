@@ -105,9 +105,12 @@ class CancelView(View):
             
 
 
+        print(interaction.channel)
+        print(interaction.channel.name)
+        print(interaction.channel.members)
         users = tuple(filter(is_a_normal_member, interaction.channel.members))
         if len(users) == 0:
-            await interaction.response.send_mssage("Something aint right, 0 members!1!!?", ephemeral=True)
+            await interaction.response.send_message("Something aint right, 0 members!1!!?", ephemeral=True)
             return
         normalview = discord.ui.View(timeout=500)
         if len(users) > 25:
@@ -117,7 +120,7 @@ class CancelView(View):
             btn = discord.ui.Button(label=f"{user.display_name}", style=discord.ButtonStyle.grey)
             async def assign(interaction: discord.Interaction):
                 HAS_TRIDENT_OBJ = interaction.guild.get_role(HAS_TRIDENT_ROLE)
-                await user.add_roles(HAS_TRIDENT_OBJ)
+                await user.add_roles(HAS_TRIDENT_OBJ, reason="assign role complete")
                 await interaction.response.send_message("Assigned", ephemeral=True)
             btn.callback = assign
             normalview.add_item(btn)
