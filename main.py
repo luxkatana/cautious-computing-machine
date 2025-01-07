@@ -91,10 +91,12 @@ class CancelView(View):
                  **kwargs):
         super().__init__(timeout=None, *args, **kwargs)
         self.helper = helper
+        self.clicked: bool = False
 
     
     @discord.ui.button(label="Assign trident role for users (required)", custom_id="assign_to_btn")
     async def assign(self, _, interaction: discord.Interaction):
+        self.clicked = True
         if interaction.user.id != self.helper.id:
             await interaction.response.send_message("Not for you", ephemeral=True)
             return
@@ -106,8 +108,15 @@ class CancelView(View):
         def create_btn_callback(user: discord.Member):
             async def assign(interaction: discord.Interaction):
                 HAS_TRIDENT_OBJ = interaction.guild.get_role(HAS_TRIDENT_ROLE)
+                if HAS_TRIDENT_OBJ in user.roles:
+                    await interaction.response.send_message(f"{user.mention} somehow sneaked in with the role..? Anyways didn't assign",
+                                                            ephemeral=True)
+                    return
                 await user.add_roles(HAS_TRIDENT_OBJ, reason="assign role complete")
-                await interaction.response.send_message(f"Assigned for {user.mention}", ephemeral=True)
+                embed = discord.Embed(title="Success", description="Successfully assigned the <@&1325150669568610335> role",
+                                      colour=discord.Color.green())
+                embed.add_field(name="To who", value=user.mention, inline=False)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
             return assign
 
 
@@ -136,6 +145,12 @@ class CancelView(View):
     async def on_finish(self, _, interaction: discord.Interaction) -> None:
         if interaction.user.id != self.helper.id:
             await interaction.response.send_message("This is not for you, this is for the helper!", ephemeral=True)
+        elif self.clicked is False:
+            await interaction.response.send_message("You still have to assign people with the 'Already has trident' role\n"
+                                                    "***If you don't know how to do that, on the pinned message in the current channel "
+                                                    "you can find a button that may allow you to assign people with the role***\n"
+                                                    "If nobody joined, then just click it and close the channel.",
+                                                    ephemeral=True)
         else:
             embed = discord.Embed(title="This event has been marked as finished, this event will be deleted after 10 seconds", 
                                   description="Have fun with your trident! Make sure to invite people to this server!", color=discord.Colour.yellow())
