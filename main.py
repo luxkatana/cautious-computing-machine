@@ -317,7 +317,7 @@ class AnnouncementView(View):
         guild = self.original_message.guild
         await self.original_message.edit(view=None)
         if len(self.lists_of_people_joined) < 1:
-            await self.original_message.edit("Cancelled, nobody joined the event..", delete_after=60.0)
+            await self.original_message.edit("Cancelled, nobody joined the event..", delete_after=30 * 60)
             return 
         
 
