@@ -393,7 +393,6 @@ async def on_ready() -> None:
            await message.delete(reason="Startup")
 
 
-    print("TODO: MAINLOOP IS SKIPPED")
     await notify_user()
     await channel.send(embed=discord.Embed(title="Bot cleanup", description="Beep boop started"))
     mainloop.start()
