@@ -102,7 +102,13 @@ class CancelView(View):
         def is_a_normal_member(user: discord.Member) -> bool:
             helper_role = interaction.guild.get_role(HELPER_ROLE)
             return (helper_role not in user.roles) and (user.id not in [714149216787628075, 719072157229121579]) and user.bot is False
-            
+        
+        def create_btn_callback(user: discord.Member):
+            async def assign(interaction: discord.Interaction):
+                HAS_TRIDENT_OBJ = interaction.guild.get_role(HAS_TRIDENT_ROLE)
+                await user.add_roles(HAS_TRIDENT_OBJ, reason="assign role complete")
+                await interaction.response.send_message(f"Assigned for {user.mention}", ephemeral=True)
+            return assign
 
 
         users = tuple(filter(is_a_normal_member, interaction.guild.get_channel(interaction.channel_id).members))
@@ -113,14 +119,9 @@ class CancelView(View):
         if len(users) > 25:
             users = users[:24:]
 
-        global user
         for user in users:
             btn = discord.ui.Button(label=f"{user.display_name}", style=discord.ButtonStyle.grey)
-            async def assign(interaction: discord.Interaction):
-                HAS_TRIDENT_OBJ = interaction.guild.get_role(HAS_TRIDENT_ROLE)
-                await user.add_roles(HAS_TRIDENT_OBJ, reason="assign role complete")
-                await interaction.response.send_message(f"Assigned for {user.mention}", ephemeral=True)
-            btn.callback = assign
+            btn.callback = create_btn_callback(user)
             normalview.add_item(btn)
         if len(users) > 25:
             await interaction.response.send_message("Please note that you have to click one more time after this", 
