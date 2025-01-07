@@ -23,10 +23,10 @@ handler.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-logging.getLogger().setLevel(logging.ERROR)
 logging.getLogger("discord").setLevel(logging.ERROR)
 
 print = logger.info
+eprint = logger.error
 
 def generate_nonce(length: int) -> str:
     return ''.join([choice(digits) for _ in range(length)])
@@ -72,6 +72,8 @@ async def on_error(exception: Exception, *args, **kwargs) -> None:
     channel = bot.get_channel(1323285527486529627)
     await channel.send("Exception occured:\n"
                        f"```{format_exc()}```")
+    eprint(str(exception))
+    eprint(exception)
     raise exception
 
 @bot.event
@@ -83,6 +85,8 @@ async def on_application_command_error(
     await channel.send(f"raw: {exception}")
     await channel.send("Exception occured:\n"
                        f"```{format_exc()}```")
+    eprint(exception)
+    raise exception
 
 
 class CancelView(View):
