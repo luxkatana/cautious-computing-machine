@@ -113,6 +113,7 @@ class CancelView(View):
         if len(users) > 25:
             users = users[:24:]
 
+        global user
         for user in users:
             btn = discord.ui.Button(label=f"{user.display_name}", style=discord.ButtonStyle.grey)
             async def assign(interaction: discord.Interaction):
