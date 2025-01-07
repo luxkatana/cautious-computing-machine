@@ -4,6 +4,7 @@ import discord
 from re import search as regex_search
 from roblox import Client
 import logging
+from uuid import getnode
 from random import choice
 from discord.ext import commands, tasks
 from traceback import format_exc
@@ -45,7 +46,8 @@ bot = commands.Bot(intents=discord.Intents.all(), debug_guilds=[1321602258038820
 EVENTS_CHANNEL = 1321622294388412480
 HAS_TRIDENT_ROLE: int = 1325150669568610335
 HELPER_ROLE = 1321615619640135731
-DEBUGGING_MODE: bool = False
+DEBUGGING_MODE: bool = getnode() != 240374920240546
+
 TRIDENT_TIME_TO_WAIT_IN_SECS: int = 15 * 60 
 def build_default_embed(ending_time: int,
                         amount_of_people: int=0,
