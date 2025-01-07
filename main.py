@@ -45,6 +45,7 @@ bot = commands.Bot(intents=discord.Intents.all(), debug_guilds=[1321602258038820
 EVENTS_CHANNEL = 1321622294388412480
 HAS_TRIDENT_ROLE: int = 1325150669568610335
 HELPER_ROLE = 1321615619640135731
+DEBUGGING_MODE: bool = False
 TRIDENT_TIME_TO_WAIT_IN_SECS: int = 15 * 60 
 def build_default_embed(ending_time: int,
                         amount_of_people: int=0,
@@ -409,9 +410,12 @@ async def on_ready() -> None:
            await message.delete(reason="Startup")
 
 
-    await notify_user()
-    await channel.send(embed=discord.Embed(title="Bot cleanup", description="Beep boop started"))
-    mainloop.start()
+    if DEBUGGING_MODE is False:
+        await notify_user()
+        await channel.send(embed=discord.Embed(title="Bot cleanup", description="Beep boop started"))
+        mainloop.start()
+    else:
+        raise BaseException("This isn't an error, but debugging mode is currently on, just so you know :)")
 
 
 
