@@ -33,11 +33,14 @@ def generate_nonce(length: int) -> str:
     return ''.join([choice(digits) for _ in range(length)])
 
 async def parse_displayname_by_user(user: discord.Member) -> tuple[bool, str, str]:
-    splitted = user.display_name.split(" (@")
-    if len(splitted) != 2:
+    try:
+        splitted = user.display_name.split(" (@")
+        if len(splitted) != 2:
+            return (False, "", "")
+        display, realuser = splitted[0], splitted[1][:-1:]
+        return (True, display, realuser)
+    except Exception:
         return (False, "", "")
-    display, realuser = splitted[0], splitted[1][:-1:]
-    return (True, display, realuser)
 
 
 load_dotenv()
@@ -321,15 +324,15 @@ class AnnouncementView(View):
     async def go_continue(self) -> None:
         EVENTS: discord.TextChannel = bot.get_channel(EVENTS_CHANNEL)
         guild = self.original_message.guild
-        await self.original_message.edit(view=None)
+        await self.original_message.edit(view=None, embed=None)
         if len(self.lists_of_people_joined) < 1:
-            await self.original_message.edit("Cancelled, nobody joined the event..", delete_after=30 * 60)
+            await self.original_message.edit(f"Cancelled, nobody joined the event.. Next event will be <t:{int(time() + 30 * 60)}:t>", 
+                                             delete_after=30 * 60)
             return 
         
 
         if self.current_helper is None:
-            await self.original_message.edit(f"Cancelled, there is no helper assigned to this event, next event will be <t:{int(time() + 30 * 60)}:t>",
-                                              embed=None, delete_after=30 * 60)
+            await self.original_message.edit(f"Cancelled, there is no helper assigned to this event, next event will be <t:{int(time() + 30 * 60)}:t>", delete_after=30 * 60)
             return
 
         permissions = {member: discord.PermissionOverwrite(read_messages=True, send_messages=True) for member in self.lists_of_people_joined + [self.current_helper]}
@@ -341,10 +344,12 @@ class AnnouncementView(View):
                                                          slowmode_delay=5,
                                                          overwrites=permissions)
         next_time = int(time() + (30 * 60))
-        await self.original_message.edit(f"Go to <#{channel.id}> for instructions\nNext event will be <t:{next_time}:t>",
-                                         embed=None,
-                                         view=None, delete_after=60 * 30)
-        result = "\n".join(map(lambda member: f"<@{member.id}>", self.lists_of_people_joined))
+        msg = (f"# For people who attended to this event\n> Please go to {channel.mention} for instructions\n"
+              "# For people who didn't attend to this event and is waiting for the next trident-door event\n" 
+               f"> Next event will be <t:{next_time}:t> (after 30 minutes)")
+
+        await self.original_message.edit(content=msg, delete_after=30 * 60)
+        result = "\n".join(map(lambda member: f"<@{member.id}>", self.lists_of_people_joined + [self.current_helper]))
         result = f'||{result}||'
         embed = discord.Embed(title="Welcome adventurers",
                               description=f"Welcome, this is the trident-door-opening event. Please do what {self.current_helper.mention} asks you to do", colour=discord.Color.gold())
@@ -356,10 +361,13 @@ class AnnouncementView(View):
             cancel_view.add_item(discord.ui.Button(label=f"Visit {display} on roblox",
                                                        url=f"https://roblox.com/users/{userid}/profile")) 
         else:
+            print("COULDN'T PARSE")
             await channel.send(f"{self.current_helper.mention} couldn't parse your account by username, please run ``/verify`` by bloxlink to set up your username.")
 
 
+        print("PINNING MESSAGE")
         message = await channel.send(result, view=cancel_view, embed=embed)
+        print("MESSAGE PINGED")
         await message.pin()
 
         
@@ -382,6 +390,7 @@ async def mainloop() -> None:
     print(f"RN: {now}")
     print(f"waiting time: {time_to_wait}")
     await async_sleep(time_to_wait)
+    print("STARTING WITH EVENT, WAIT FINISH")
     await interactionviews.go_continue()
 
 async def resolve_broken_cancel_views() -> None:
@@ -422,7 +431,7 @@ async def on_ready() -> None:
 
     if DEBUGGING_MODE is False:
         await notify_user()
-        await channel.send(embed=discord.Embed(title="Bot cleanup", description="Beep boop started"))
+        await channel.send(embed=discord.Embed(title="Bot cleanup", description="Beep boop started"), delete_after=10.0)
         mainloop.start()
     else:
         raise BaseException("This isn't an error, but debugging mode is currently on, just so you know :)")
