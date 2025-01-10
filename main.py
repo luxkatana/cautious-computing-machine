@@ -130,7 +130,7 @@ class CancelView(View):
             return assign
 
 
-        users = tuple(filter(is_a_normal_member, interaction.guild.get_channel(interaction.channel_id).members))
+        users = tuple(filter(is_a_normal_member, interaction.channel.members))
         if len(users) == 0:
             await interaction.response.send_message("Something aint right, 0 members!1!!?", ephemeral=True)
             return
@@ -143,7 +143,8 @@ class CancelView(View):
             btn.callback = create_btn_callback(user)
             normalview.add_item(btn)
         if len(users) > 25:
-            await interaction.response.send_message("Please note that you have to click one more time after this", 
+            await interaction.response.send_message("Assign the users that you have to assign\n"
+                                                    "**NOTE: please note that you have to click one more time the assign button**", 
                                                     view=normalview, 
                                                     ephemeral=True)
         else:
@@ -159,7 +160,7 @@ class CancelView(View):
             await interaction.response.send_message("You still have to assign people with the 'Already has trident' role\n"
                                                     "***If you don't know how to do that, on the pinned message in the current channel "
                                                     "you can find a button that may allow you to assign people with the role***\n"
-                                                    "If nobody joined, then just click it and close the channel.",
+                                                    "If there is nobody to assign this role to, then just click it and close the channel.",
                                                     ephemeral=True)
         else:
             embed = discord.Embed(title="This event has been marked as finished, this event will be deleted after 10 seconds", 
@@ -413,10 +414,13 @@ async def resolve_broken_cancel_views() -> None:
 async def on_ready() -> None:
     bot.add_view(AnnouncementView(0))
     bot.add_view(CancelView(None))
+
     if DEBUGGING_MODE is False:
         await bot.change_presence(activity=discord.Game(name="Making events..."))
     else:
         await bot.change_presence(activity=discord.Game(name="[DEBUGGING] making nukes to nuke France..."))
+        print("ON DEBUGGING MODE, THEREFORE SKIPPING SANITY CHECKS")
+        return
 
     await resolve_broken_cancel_views()
     print(f"User logged at {bot.user}")
