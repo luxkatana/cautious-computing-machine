@@ -104,12 +104,15 @@ class CancelView(View):
         self.clicked: bool = False
 
     
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != 714149216787628075 and interaction.user.id != self.helper.id:
+            await interaction.response.send_message("Not for you..", ephemeral=True)
+            return False
+
+        return True
     @discord.ui.button(label="Assign trident role for users (required)", custom_id="assign_to_btn")
     async def assign(self, _, interaction: discord.Interaction):
         self.clicked = True
-        if interaction.user.id != self.helper.id:
-            await interaction.response.send_message("Not for you", ephemeral=True)
-            return
 
         def is_a_normal_member(user: discord.Member) -> bool:
             helper_role = interaction.guild.get_role(HELPER_ROLE)
@@ -154,9 +157,7 @@ class CancelView(View):
 
     @discord.ui.button(label="Delete & finish this event (press this to delete and finish this event)", style=discord.ButtonStyle.red, custom_id="delete_btn")
     async def on_finish(self, _, interaction: discord.Interaction) -> None:
-        if interaction.user.id != self.helper.id:
-            await interaction.response.send_message("This is not for you, this is for the helper!", ephemeral=True)
-        elif self.clicked is False:
+        if self.clicked is False:
             await interaction.response.send_message("You still have to assign people with the 'Already has trident' role\n"
                                                     "***If you don't know how to do that, on the pinned message in the current channel "
                                                     "you can find a button that may allow you to assign people with the role***\n"
