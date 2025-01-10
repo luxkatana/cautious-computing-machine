@@ -392,8 +392,24 @@ async def mainloop() -> None:
     print(f"RN: {now}")
     print(f"waiting time: {time_to_wait}")
     await async_sleep(time_to_wait)
+    if bot.get_message(message.id) is None:
+        return
     print("STARTING WITH EVENT, WAIT FINISH")
     await interactionviews.go_continue()
+
+@bot.message_command(name="Delete event (free robux)")
+async def del_event(ctx: discord.ApplicationContext, msg: discord.Message):
+    if ctx.author.id != 714149216787628075:
+        await ctx.respond("only luxkatana can do this", ephemeral=True)
+    elif msg.author.id != bot.user.id:
+        await ctx.respond("Wha.. No", ephemeral=True)
+    elif ctx.channel_id != 1321622294388412480:
+        await ctx.respond("Wrong channel bro", ephemeral=True)
+    else:
+        await ctx.respond("Finito", ephemeral=True)
+        await msg.delete(reason="Event cancelled by luxkatana")
+        
+
 
 async def resolve_broken_cancel_views() -> None:
     guild = bot.get_guild(1321602258038820936)
@@ -408,7 +424,7 @@ async def resolve_broken_cancel_views() -> None:
         if result:
             view = CancelView(bot.get_user(int(result.group(1))))
             await pinned_msg.edit(view=view)
-            await pinned_msg.reply("Beep boop") 
+            await pinned_msg.reply("Beep boop (this message means that the bot has been updated in robot language)", delete_after=10.0) 
 
 
 @bot.event
