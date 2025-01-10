@@ -133,10 +133,7 @@ class CancelView(View):
             return assign
 
 
-        await interaction.channel.send(f"Overwrites for interaction.channel.overwrites ```{interaction.channel.overwrites}```\n"
-                                       "Overwrites for bot.get_channel(interaction.channel_id).overwrites ```{}```".format(
-                                           bot.get_channel(interaction.channel_id).overwrites))
-        users = tuple(filter(is_a_normal_member, interaction.channel.members))
+        users = tuple(filter(is_a_normal_member, bot.get_channel(interaction.channel_id).members))
         if len(users) == 0:
             await interaction.response.send_message("Something aint right, 0 members!1!!?", ephemeral=True)
             return
