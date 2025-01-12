@@ -465,19 +465,19 @@ async def on_ready() -> None:
 
 
 
-@desolate_group.command(name="retrieve_desolate_from_user", description="This will pull the desolate deep bestiary from the user, if applied")
-@discord.option(name="user", input_type=discord.Member, required=True)
+@bot.user_command(name="Get desolate deep bestiary", 
+                  description="This will pull the desolate deep bestiary from the user, if applied")
 async def retrieve_from_desoalte(ctx: discord.ApplicationContext, user: discord.Member):
     if ctx.guild.get_role(HELPER_ROLE) not in ctx.author.roles:
         await ctx.respond("You're not allowed to do this.", ephemeral=True)
         return
     cursor: aiosqlite.Cursor = await bot.connection.cursor()
     await cursor.execute("SELECT image FROM desolatebs WHERE USERID=?", (user.id,))
-    fetch = tuple(await cursor.fetchone())
-    if len(fetch) == 0:
-        await ctx.respon("User did not submit yet a desolate deep bestiary.", ephemeral=True)
+    fetch = await cursor.fetchone()
+    if fetch is None:
+        await ctx.respond("User did not submit yet a desolate deep bestiary.", ephemeral=True)
     else:
-        print(fetch[0])
+        fetch = tuple(fetch)
         decoded_content = base64.b64decode(fetch[0].encode())
         io = BytesIO(decoded_content)
         await ctx.respond(f"Image supplied by {user.mention}", file=discord.File(fp=io, filename="holyfimcmlois.jpg"))
