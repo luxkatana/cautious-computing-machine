@@ -472,7 +472,7 @@ async def retrieve_from_desoalte(ctx: discord.ApplicationContext, user: discord.
         await ctx.respond("You're not allowed to do this.", ephemeral=True)
         return
     cursor: aiosqlite.Cursor = await bot.connection.cursor()
-    await cursor.execute("SELECT image FROM desolatebs WHERE USERID=?", (ctx.author.id,))
+    await cursor.execute("SELECT image FROM desolatebs WHERE USERID=?", (user.id,))
     fetch = tuple(await cursor.fetchone())
     if len(fetch) == 0:
         await ctx.respon("User did not submit yet a desolate deep bestiary.", ephemeral=True)
