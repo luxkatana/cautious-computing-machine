@@ -1,10 +1,13 @@
 #!/home/luxkatana/pyenv/bin/python3
 from datetime import datetime
+from io import BytesIO
 import discord
 from re import search as regex_search
+import aiosqlite
 from roblox import Client
 import logging
 from uuid import getnode
+import base64
 from random import choice
 from discord.ext import commands, tasks
 from traceback import format_exc
@@ -46,6 +49,7 @@ async def parse_displayname_by_user(user: discord.Member) -> tuple[bool, str, st
 load_dotenv()
 TOKEN = environ['TOKEN']
 bot = commands.Bot(intents=discord.Intents.all(), debug_guilds=[1321602258038820936]) 
+desolate_group = bot.create_group(name="helpers_application", description="Utilities for applying as a helper")
 EVENTS_CHANNEL = 1321622294388412480
 HAS_TRIDENT_ROLE: int = 1325150669568610335
 HELPER_ROLE = 1321615619640135731
@@ -429,8 +433,8 @@ async def resolve_broken_cancel_views() -> None:
 
 @bot.event
 async def on_ready() -> None:
-    bot.add_view(AnnouncementView(0))
-    bot.add_view(CancelView(None))
+    bot.connection = await aiosqlite.connect("./main.db")
+
 
     if DEBUGGING_MODE is False:
         await bot.change_presence(activity=discord.Game(name="Making events..."))
@@ -439,6 +443,8 @@ async def on_ready() -> None:
         print("ON DEBUGGING MODE, THEREFORE SKIPPING SANITY CHECKS")
         return
 
+    bot.add_view(AnnouncementView(0))
+    bot.add_view(CancelView(None))
     await resolve_broken_cancel_views()
     print(f"User logged at {bot.user}")
     channel = await bot.fetch_channel(EVENTS_CHANNEL)
@@ -458,6 +464,51 @@ async def on_ready() -> None:
         raise BaseException("This isn't an error, but debugging mode is currently on, just so you know :)")
 
 
+
+@desolate_group.command(name="retrieve_desolate_from_user", description="This will pull the desolate deep bestiary from the user, if applied")
+@discord.option(name="user", input_type=discord.Member, required=True)
+async def retrieve_from_desoalte(ctx: discord.ApplicationContext, user: discord.Member):
+    if ctx.guild.get_role(HELPER_ROLE) not in ctx.author.roles:
+        await ctx.respond("You're not allowed to do this.", ephemeral=True)
+        return
+    cursor: aiosqlite.Cursor = await bot.connection.cursor()
+    await cursor.execute("SELECT image FROM desolatebs WHERE USERID=?", (ctx.author.id,))
+    fetch = tuple(await cursor.fetchone())
+    if len(fetch) == 0:
+        await ctx.respon("User did not submit yet a desolate deep bestiary.", ephemeral=True)
+    else:
+        print(fetch[0])
+        decoded_content = base64.b64decode(fetch[0].encode())
+        io = BytesIO(decoded_content)
+        await ctx.respond(f"Image supplied by {user.mention}", file=discord.File(fp=io, filename="holyfimcmlois.jpg"))
+
+
+@desolate_group.command(name="submit_desolate_bestiary", 
+                        description="This will submit your desolate deep bestiary for the helpers application")
+@discord.option(name="image", input_type=discord.Attachment, required=True)
+async def submit_desolate(ctx: discord.ApplicationContext,
+                          image: discord.Attachment):
+    if ctx.guild.get_role(HELPER_ROLE) in ctx.author.roles:
+        await ctx.respond("This is not for helpers, this is for people that are applying", ephemeral=True)
+        return
+
+    if not image.content_type.startswith("image/"):
+        await ctx.respond("Attachment is not a valid image.", ephemeral=True)
+        return
+
+    encoded_data: str = base64.b64encode(await image.read()).decode()
+    cursor: aiosqlite.Cursor = await bot.connection.cursor()
+    await cursor.execute("SELECT COUNT(*) FROM desolatebs WHERE USERID=?;", (ctx.author.id,))
+    result = await cursor.fetchone()
+
+    if tuple(result)[0] == 0: # doesnt exist, create new
+        await cursor.execute("INSERT INTO desolatebs(USERID, image) VALUES (?, ?)", (ctx.author.id, encoded_data))
+    else:
+        await cursor.execute("UPDATE desolatebs SET image=? WHERE USERID=?", (encoded_data, ctx.author.id))
+
+    await bot.connection.commit()
+    await cursor.close()
+    await ctx.respond("Succesfully submitted desolate deep bestiary.", file=await image.to_file(), ephemeral=True)
 
 @bot.slash_command(name="seelogs", description="Read logger handler")
 async def read_logs(ctx: discord.ApplicationContext):
