@@ -53,7 +53,7 @@ class ConfirmationView(View):
 
 
 
-class WaitingList(list, Generic[T]):
+class WaitingList(list):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._length_futures: dict[int, asyncio.Future] = {}
