@@ -436,10 +436,10 @@ async def resolve_broken_cancel_views() -> None:
 async def on_ready() -> None:
     bot.connection = await aiosqlite.connect("./main.db")
 
-
     if DEBUGGING_MODE is False:
         await bot.change_presence(activity=discord.Game(name="Making events..."))
     else:
+
         await bot.change_presence(activity=discord.Game(name="[DEBUGGING] making nukes to nuke France..."))
         print("ON DEBUGGING MODE, THEREFORE SKIPPING SANITY CHECKS")
         return
@@ -458,9 +458,10 @@ async def on_ready() -> None:
 
 
     await channel.send(embed=discord.Embed(title="Heya", 
-                                           description="May, luxkatana (Taseen Mohammed) the best programmer of the universe update the bot.").set_footer(text="I am wishing y'all a good time"))
+                                           description="May, luxkatana, the best programmer of the universe update the bot.")
+                       .set_footer(text="I am wishing y'all a good time"))
     if DEBUGGING_MODE is False:
-        await notify_user()
+        await notify_user(channel)
         await channel.send(embed=discord.Embed(title="Bot cleanup", description="Beep boop started"), delete_after=10.0)
         mainloop.start()
     else:
