@@ -58,7 +58,7 @@ class WaitingList(list):
         super().__init__(*args, **kwargs)
         self._length_futures: dict[int, asyncio.Future] = {}
     
-    def append(self, item: T) -> None:
+    def append(self, item) -> None:
         super().append(item)
         # Check if we have any futures waiting for this length
         new_length = len(self)
