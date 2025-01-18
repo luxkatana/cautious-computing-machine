@@ -74,7 +74,7 @@ class WaitingList(list):
                 future.set_result(None)
             del self._length_futures[length]
     
-    async def wait_for(self, length: int, timeout: Optional[float] = None) -> None:
+    async def wait_for(self, length: int, timeout: float = None) -> None:
         """
         Wait until the list reaches the specified length.
         
