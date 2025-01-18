@@ -13,6 +13,9 @@ class ConfirmationView(View):
         super().__init__(disable_on_timeout=True, timeout=3 * 60)
 
 
+    def stop(self) -> None:
+        self.disable_all_items()
+        self.stop()
     async def interaction_check(self, 
                                 interaction: Interaction):
         if interaction.user != self.user:
@@ -31,7 +34,7 @@ class ConfirmationView(View):
         await interaction.response.send_message(
                 "Catched that, great job!", 
                                                 ephemeral=True)
-        await self.stop()
+        self.stop()
         self.confirmations.append(True)
         await interaction.delete_original_response()
 
@@ -39,7 +42,7 @@ class ConfirmationView(View):
                        style=discord.ButtonStyle.red)
     async def nah_i_got_no(self, _, interaction: discord.Interaction):
         await interaction.response.send_message("That sucks.. Pay attention next time!", ephemeral=True)
-        await self.stop()
+        self.stop()
         await interaction.delete_original_message()
         await self.confirmations.append(False)
 

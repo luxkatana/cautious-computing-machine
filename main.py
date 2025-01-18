@@ -112,7 +112,7 @@ class CancelView(View):
 
     
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if interaction.user.id != 714149216787628075 and interaction.user.id != self.helper.id:
+        if interaction.user.id not in SPECIAL_SQUAD and interaction.user.id != self.helper.id:
             await interaction.response.send_message("Not for you..", ephemeral=True)
             return False
 
@@ -372,8 +372,8 @@ async def mainloop() -> None:
 
 @bot.message_command(name="Delete event (free robux)")
 async def del_event(ctx: discord.ApplicationContext, msg: discord.Message):
-    if ctx.author.id != 714149216787628075:
-        await ctx.respond("only luxkatana can do this", ephemeral=True)
+    if ctx.author.id not in SPECIAL_SQUAD:
+        await ctx.respond("only special people can do this", ephemeral=True)
     elif msg.author.id != bot.user.id:
         await ctx.respond("Wha.. No", ephemeral=True)
     elif ctx.channel_id != 1321622294388412480:
@@ -485,7 +485,7 @@ async def submit_desolate(ctx: discord.ApplicationContext,
 
 @bot.slash_command(name="seelogs", description="Read logger handler")
 async def read_logs(ctx: discord.ApplicationContext):
-    if ctx.author.id not in [714149216787628075, 719072157229121579]:
+    if ctx.author.id not in SPECIAL_SQUAD:
         await ctx.respond("Not for you", ephemeral=True)
         return
     await ctx.defer()
