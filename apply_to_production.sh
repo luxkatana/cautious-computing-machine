@@ -1,6 +1,6 @@
 #!/usr/bin/sh
 git pull
 
-systemctl --user daemon-reload
-
+echo "Restarting unit"
 systemctl --user restart event
+echo "Successfully restarted!"
