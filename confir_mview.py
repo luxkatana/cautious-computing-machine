@@ -1,18 +1,16 @@
-from discord.ui import View, Button
+from discord.ui import View
 from discord import Interaction
 import discord
 import asyncio
 
 
 class ConfirmationView(View):
-    def __init__(self, bot: discord.Bot, user: discord.Member,
+    def __init__(self, user: discord.Member,
                  confirmations: list[bool]):
-        self.bot = bot
         self.user = user
-        self.timeout = 3 * 60
         self.sticked_message: discord.Message = None
         self.confirmations = confirmations
-        self.disable_on_timeout = True
+        super().__init__(disable_on_timeout=True, timeout=3 * 60)
 
 
     async def interaction_check(self, 

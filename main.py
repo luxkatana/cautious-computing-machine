@@ -52,6 +52,7 @@ load_dotenv()
 TOKEN = environ['TOKEN']
 bot = commands.Bot(intents=discord.Intents.all(), debug_guilds=[1321602258038820936]) 
 desolate_group = bot.create_group(name="helpers_application", description="Utilities for applying as a helper")
+SPECIAL_SQUAD = {714149216787628075, 1008651612820095056, 719072157229121579}
 EVENTS_CHANNEL = 1321622294388412480
 HAS_TRIDENT_ROLE: int = 1325150669568610335
 HELPER_ROLE = 1321615619640135731
@@ -132,10 +133,12 @@ class CancelView(View):
             print(user)
             if user.bot is False and interaction.guild.get_role(HELPER_ROLE) not in user.roles:
                 count += 1
-                conf_view = ConfirmationView(bot, user, confirmations)
+                conf_view = ConfirmationView(user, confirmations)
                 conf_view.sticked_message = await interaction.channel.send(f"{user.mention}, did you get the trident?", view=conf_view)
 
-        await confirmations.wait_for(count, 3 * 60)
+        try:
+            await confirmations.wait_for(count, 3 * 60)
+        except Exception: ...
 
         await interaction.channel.delete(reason=f"Event finished, <@{interaction.user.id}> clicked this button")
 
@@ -191,6 +194,9 @@ async def on_message(message: discord.Message):
             '''
             abracadabra remove channel
             ''').lower().rstrip().strip()
+    if message.content.lower() == "somethingpoopy":
+        await resolve_broken_cancel_views()
+        return
     if message.content.lower() == thick_of_it and message.guild.get_role(HELPER_ROLE) in message.author.roles and \
             message.channel.name.startswith("join-the-trident"):
         embed = discord.Embed(title="This event has been marked as finished, this event will be deleted after 10 seconds", 
