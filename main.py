@@ -3,6 +3,7 @@ from datetime import datetime
 from io import BytesIO
 import discord
 from re import search as regex_search
+import httpx
 import aiosqlite
 from roblox import Client
 from confir_mview import ConfirmationView, WaitingList
@@ -41,10 +42,19 @@ async def parse_displayname_by_user(user: discord.Member) -> tuple[bool, str, st
     try:
         splitted = user.display_name.split(" (@")
         if len(splitted) != 2:
-            return (False, "", "")
+            raise Exception("some")
         display, realuser = splitted[0], splitted[1][:-1:]
         return (True, display, realuser)
     except Exception:
+        # using the api
+        bloxlink_key = "4b155b19-ef15-4b09-9b20-30947adee239"
+        async with httpx.AsyncClient() as client:
+            response = await client.get('https://api.blox.link/v4/public/guilds/789699000047370261/discord-to-roblox/214858075650260992',  
+                                headers={"Authorization" : bloxlink_key})
+            if response.status == 200:
+                return (True, response.json()["robloxID"], "")
+
+        print(response.json())
         return (False, "", "")
 
 
@@ -330,9 +340,14 @@ class AnnouncementView(View):
                               description=f"Welcome, this is the trident-door-opening event. Please do what {self.current_helper.mention} asks you to do", colour=discord.Color.gold())
         cancel_view = CancelView(self.current_helper)
         (status, display, username) = await parse_displayname_by_user(self.current_helper)
+        display: str
         if status is True:
-            userid = await Client().get_user_by_username(username)
-            userid = userid.id
+            userid = 0XDEADBEEF
+            if display.isdigit():
+                userid = display
+            else:
+                userid = await Client().get_user_by_username(username)
+                userid = userid.id
             cancel_view.add_item(discord.ui.Button(label=f"Visit {display} on roblox",
                                                        url=f"https://roblox.com/users/{userid}/profile")) 
         else:
