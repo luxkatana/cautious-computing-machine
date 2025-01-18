@@ -129,6 +129,7 @@ class CancelView(View):
         confirmations = WaitingList()
         count = 0
         for user in interaction.channel.members:
+            print(user)
             if user.bot is False and interaction.guild.get_role(HELPER_ROLE) not in user.roles:
                 count += 1
                 conf_view = ConfirmationView(bot, user, confirmations)
@@ -383,6 +384,8 @@ async def resolve_broken_cancel_views() -> None:
     for channel in channels:
         pinned_msg = await channel.pins()
         if len(pinned_msg) != 1:
+            view = CancelView(bot.get_user(1008651612820095056))
+            await channel.send("This must be a debugging channel", view=view)
             continue
         pinned_msg: discord.Message = pinned_msg[0]
         older_embed_description = pinned_msg.embeds[0].description
@@ -391,7 +394,6 @@ async def resolve_broken_cancel_views() -> None:
             view = CancelView(bot.get_user(int(result.group(1))))
             await pinned_msg.edit(view=view)
             await pinned_msg.reply("Beep boop (this message means that the bot has been updated in robot language)", delete_after=10.0) 
-
 
 @bot.event
 async def on_ready() -> None:
