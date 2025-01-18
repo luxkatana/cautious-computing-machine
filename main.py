@@ -20,6 +20,7 @@ from string import digits
 from notify_update import notify_user
 
 
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 handler = logging.FileHandler("log.log")
@@ -456,6 +457,8 @@ async def on_ready() -> None:
            await message.delete(reason="Startup")
 
 
+    await channel.send(embed=discord.Embed(title="Heya", 
+                                           description="May, luxkatana (Taseen Mohammed) the best programmer of the universe update the bot.").set_footer(text="I am wishing y'all a good time"))
     if DEBUGGING_MODE is False:
         await notify_user()
         await channel.send(embed=discord.Embed(title="Bot cleanup", description="Beep boop started"), delete_after=10.0)
