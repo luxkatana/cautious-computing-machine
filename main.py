@@ -5,6 +5,7 @@ import discord
 from re import search as regex_search
 import aiosqlite
 from roblox import Client
+from confir_mview import ConfirmationView, WaitingList
 import logging
 from uuid import getnode
 import base64
@@ -115,68 +116,28 @@ class CancelView(View):
             return False
 
         return True
-    @discord.ui.button(label="Assign trident role for users (required)", custom_id="assign_to_btn")
-    async def assign(self, _, interaction: discord.Interaction):
-        self.clicked = True
-
-        def is_a_normal_member(user: discord.Member) -> bool:
-            helper_role = interaction.guild.get_role(HELPER_ROLE)
-            return (helper_role not in user.roles) and (user.id not in [714149216787628075, 719072157229121579]) and user.bot is False
-        
-        def create_btn_callback(user: discord.Member):
-            async def assign(interaction: discord.Interaction):
-                HAS_TRIDENT_OBJ = interaction.guild.get_role(HAS_TRIDENT_ROLE)
-                if HAS_TRIDENT_OBJ in user.roles:
-                    await interaction.response.send_message(f"{user.mention} somehow sneaked in with the role..? Anyways didn't assign",
-                                                            ephemeral=True)
-                    return
-                await user.add_roles(HAS_TRIDENT_OBJ, reason="assign role complete")
-                embed = discord.Embed(title="Success", description="Successfully assigned the <@&1325150669568610335> role",
-                                      colour=discord.Color.green())
-                embed.add_field(name="To who", value=user.mention, inline=False)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-            return assign
-
-
-        users = tuple(filter(is_a_normal_member, interaction.channel.members))
-        if len(users) == 0:
-            await interaction.response.send_message("Something aint right, 0 members!1!!?", ephemeral=True)
-            return
-        normalview = discord.ui.View(timeout=500)
-        if len(users) > 25:
-            users = users[:24:]
-
-        for user in users:
-            btn = discord.ui.Button(label=f"{user.display_name}", style=discord.ButtonStyle.grey)
-            btn.callback = create_btn_callback(user)
-            normalview.add_item(btn)
-        if len(users) > 25:
-            await interaction.response.send_message("Assign the users that you have to assign\n"
-                                                    "**NOTE: please note that you have to click one more time the assign button**", 
-                                                    view=normalview, 
-                                                    ephemeral=True)
-        else:
-            await interaction.response.send_message("Alright, click to assign the trident role", view=normalview, ephemeral=True)
 
 
 
     @discord.ui.button(label="Delete & finish this event (press this to delete and finish this event)", style=discord.ButtonStyle.red, custom_id="delete_btn")
     async def on_finish(self, _, interaction: discord.Interaction) -> None:
-        if self.clicked is False:
-            await interaction.response.send_message("You still have to assign people with the 'Already has trident' role\n"
-                                                    "***If you don't know how to do that, on the pinned message in the current channel "
-                                                    "you can find a button that may allow you to assign people with the role***\n"
-                                                    "If there is nobody to assign this role to, then just click it and close the channel.",
-                                                    ephemeral=True)
-        else:
-            embed = discord.Embed(title="This event has been marked as finished, this event will be deleted after 10 seconds", 
-                                  description="Have fun with your trident! Make sure to invite people to this server!", color=discord.Colour.yellow())
-            embed.set_footer(text=f"Please make sure to thank {self.helper.display_name} for his help!")
-            await interaction.response.send_message("Deleting after 10 seconds. Thank you for your service!", ephemeral=True)
-            await interaction.channel.send(embed=embed)
-            
-            await async_sleep(10)
-            await interaction.channel.delete(reason=f"Event finished, <@{interaction.user.id}> clicked this button")
+        embed = discord.Embed(title="This event has been marked as finished, this event will be deleted after when everyone replied (or in 3 minutes automatic)", 
+                              description="Have fun with your trident! Make sure to invite people to this server!", color=discord.Colour.yellow())
+        embed.set_footer(text=f"Please make sure to thank {self.helper.display_name} for his help!")
+        await interaction.response.send_message("Sending messages, thx!", ephemeral=True)
+        await interaction.channel.send(embed=embed)
+        confirmations = WaitingList()
+        count = 0
+        for user in interaction.channel.members:
+            if user.bot is False and interaction.guild.get_role(HELPER_ROLE) not in user.roles:
+                count += 1
+                conf_view = ConfirmationView(bot, user, confirmations)
+                conf_view.sticked_message = await interaction.channel.send(f"{user.mention}, did you get the trident?", view=conf_view)
+
+        await confirmations.wait_for(count, 3 * 60)
+
+        await interaction.channel.delete(reason=f"Event finished, <@{interaction.user.id}> clicked this button")
+
     @discord.ui.button(label="Instructions for helpers 101", custom_id="instructions_101", style=discord.ButtonStyle.grey)
     async def instructions(self, _, interaction: discord.Interaction):
         if interaction.user.id != self.helper.id:
