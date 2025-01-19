@@ -100,7 +100,7 @@ async def mainloop() -> None:
     EVENTS: discord.TextChannel = bot.get_channel(EVENTS_CHANNEL)
     embed = build_default_embed(ending_time, 0)
 
-    interactionviews = AnnouncementView(ending_time)
+    interactionviews = AnnouncementView(bot, ending_time)
     message = await EVENTS.send(embed=embed, view=interactionviews, content="||<@&1321786602778787870>||")
     interactionviews.original_message = message
 
