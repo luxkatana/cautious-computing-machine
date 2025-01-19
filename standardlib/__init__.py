@@ -1,4 +1,5 @@
 import discord
+from constants import TRIDENT_TIME_TO_WAIT_IN_SECS
 
 def build_default_embed(ending_time: int,
                         amount_of_people: int=0,
