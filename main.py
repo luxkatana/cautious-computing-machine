@@ -161,7 +161,7 @@ async def on_ready() -> None:
         print("ON DEBUGGING MODE, THEREFORE SKIPPING SANITY CHECKS")
         return
 
-    bot.add_view(AnnouncementView(0))
+    bot.add_view(AnnouncementView(bot, 0))
     bot.add_view(CancelView(None))
     await resolve_broken_cancel_views()
     print(f"User logged at {bot.user}")
