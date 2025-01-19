@@ -1,7 +1,7 @@
 from discord.ui import View
 from constants import HELPER_ROLE, EVENTS_CHANNEL
 from . import build_default_embed
-from cancel_view import CancelView
+from standardlib.cancel_view import CancelView
 from asyncio import sleep as async_sleep
 from time import time
 from random import choice

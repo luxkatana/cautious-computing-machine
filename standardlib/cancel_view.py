@@ -1,8 +1,8 @@
 
 from discord.ui import View
 import discord
+from standardlib.confirm_view import WaitingList, ConfirmationView
 from constants import SPECIAL_SQUAD, HELPER_ROLE
-from confirm_view import WaitingList, ConfirmationView
 
 class CancelView(View):
     def __init__(self,
