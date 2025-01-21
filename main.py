@@ -38,8 +38,15 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 logging.getLogger("discord").setLevel(logging.ERROR)
 
-print = logger.info
-eprint = logger.error
+def __print__(msg: str, *args, **kwargs):
+    logger.info(msg, *args, **kwargs)
+    logging.info(msg, *args, **kwargs)
+
+def __eprint__(msg: str, *args, **kwargs):
+    logger.error(msg, *args, **kwargs)
+    logging.error(msg, *args, **kwargs)
+print = __print__
+eprint = __eprint__
 
 
 @bot.event
