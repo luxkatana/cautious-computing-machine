@@ -11,7 +11,6 @@ class CancelView(View):
                  **kwargs):
         super().__init__(timeout=None, *args, **kwargs)
         self.helper = helper
-        self.clicked: bool = False
 
     
     async def interaction_check(self, interaction: discord.Interaction) -> bool:

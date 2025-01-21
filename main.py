@@ -1,15 +1,12 @@
 #!/home/luxkatana/pyenv/bin/python3
 from datetime import datetime
 from io import BytesIO
-import discord
 from re import search as regex_search
-import aiosqlite
 from discord.ext import commands
 from standardlib import build_default_embed
 from standardlib.cancel_view import CancelView
 from standardlib.announcement_view import AnnouncementView
-import logging
-import base64
+from standardlib.confirm_view import ConfirmationView, WaitingList
 from discord.ext import tasks
 from traceback import format_exc
 from asyncio import sleep as async_sleep
@@ -19,6 +16,10 @@ from constants import SPECIAL_SQUAD, EVENTS_CHANNEL, HELPER_ROLE, TRIDENT_TIME_T
 from os import environ
 from dotenv import load_dotenv
 from uuid import getnode
+import logging
+import base64
+import discord
+import aiosqlite
 load_dotenv()
 
 
@@ -253,6 +254,26 @@ async def read_logs(ctx: discord.ApplicationContext):
     except Exception:
         await ctx.respond("log.log file doesn't exist, therefore it's not possible to read it", ephemeral=True)
 
+
+@bot.slash_command(name="trial", description="Preview a view")
+@discord.option(name="viewtype", input_type=str, choices=["cancel_view", "confirm_view"])
+async def trial(ctx: discord.ApplicationContext, viewtype: str):
+    if ctx.author.id not in SPECIAL_SQUAD:
+        await ctx.respond("not for you", ephemeral=True)
+        return
+    if viewtype == "cancel_view":
+        view = CancelView(ctx.author)
+        await ctx.respond("Follow the blah blah (just know that it could actually do stuff)", view=view)
+    else:
+        waitinglist = WaitingList()
+        view = ConfirmationView(ctx.author, waitinglist)
+        await ctx.respond("Got the trident role lil bro (this is cringe)?", view=view)
+        try:
+            await waitinglist.wait_for(1, 3 * 60)
+        except Exception:
+            await ctx.channel.send("Not sent on time (timeout reached)")
+        else:
+            await ctx.channel.send("Success")
 
 bot.run(TOKEN)
 
