@@ -15,7 +15,7 @@ class ConfirmationView(View):
 
     def stop(self) -> None:
         self.disable_all_items()
-        self.stop()
+        super().stop()
     async def interaction_check(self, 
                                 interaction: Interaction):
         if interaction.user != self.user:
@@ -36,7 +36,7 @@ class ConfirmationView(View):
                                                 ephemeral=True)
         self.stop()
         self.confirmations.append(True)
-        await interaction.delete_original_response()
+        await interaction.delete_original_message()
 
     @discord.ui.button(label="Nah I got no trident",
                        style=discord.ButtonStyle.red)
