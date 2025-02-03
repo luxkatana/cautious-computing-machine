@@ -2,3 +2,4 @@
 /__pycache__
 /standardlib/__pycache__
 /main.db
+/.env
