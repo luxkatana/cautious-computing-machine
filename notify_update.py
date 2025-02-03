@@ -1,9 +1,10 @@
 from github import Github
 from discord import TextChannel, Embed
+from os import environ
 
 # GitHub Configuration
 async def notify_user(channel: TextChannel):
-    GITHUB_TOKEN = "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"  # Replace with your GitHub token
+    GITHUB_TOKEN = environ["GH_TOKEN"]
     REPO_NAME = "luxkatana/cautious-computing-machine"  # Replace with your repository (e.g., "octocat/Hello-World")
 
     g = Github(GITHUB_TOKEN)
