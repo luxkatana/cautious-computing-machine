@@ -25,7 +25,7 @@ load_dotenv()
 
 TOKEN = environ['TOKEN']
 bot = commands.Bot(intents=discord.Intents.all(), debug_guilds=[1321602258038820936]) 
-DEBUGGING_MODE: bool = getnode() != 240374920240546
+DEBUGGING_MODE: bool = getnode() != 345045631689
 
 desolate_group = bot.create_group(name="helpers_application", description="Utilities for applying as a helper")
 
