@@ -159,6 +159,11 @@ async def resolve_broken_cancel_views() -> None:
 
 @bot.event
 async def on_ready() -> None:
+    if hasattr(bot, "on_ready_ran") is False:
+        bot.on_ready_ran = True
+    else:
+        return
+
     bot.connection = await aiosqlite.connect("./main.db")
 
     if DEBUGGING_MODE is False:
