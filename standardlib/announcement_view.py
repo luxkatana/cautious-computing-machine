@@ -50,7 +50,7 @@ class AnnouncementView(View):
     async def reply_to_interactionviews(self, _, interaction: discord.Interaction) -> None:
         fomat_endtime = f"<t:{self.end_time}:t>"
         if interaction.guild.get_role(1325150669568610335) in interaction.user.roles:
-            await interaction.response.send_message("You already have the trident, why bother joining?", ephemeral=True)
+            await interaction.response.send_message("You already have the trident rod, why bother joining?", ephemeral=True)
             return
 
         if self.current_helper is not None and self.current_helper.id == interaction.user.id:
@@ -150,14 +150,16 @@ class AnnouncementView(View):
             userid = userid.id
             cancel_view.add_item(discord.ui.Button(label=f"Visit {display} on roblox",
                                                        url=f"https://roblox.com/users/{userid}/profile")) 
+            print("SUCCESSFULLY PARSED DISPLAY NAME")
         else:
             print("COULDN'T PARSE")
-            await channel.send(f"{self.current_helper.mention} couldn't parse your account by username, please run ``/verify`` by bloxlink to set up your username.")
+            await channel.send(f"{self.current_helper.mention} couldn't parse your account by username, please run ``/verify`` by bloxlink to link your discord account with your roblox account.")
 
 
         print("PINNING MESSAGE")
         message = await channel.send(result, view=cancel_view, embed=embed)
-        print("MESSAGE PINGED")
+        print("MESSAGE WITH VIEW SENT")
+        print("MESSAGE PINNED")
         await message.pin()
         
 

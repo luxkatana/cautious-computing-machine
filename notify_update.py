@@ -12,14 +12,13 @@ async def notify_user(channel: TextChannel):
     latest_commit = repo.get_commits()[0]
 
     commit_message = latest_commit.commit.message
-    commit_author = latest_commit.commit.author.name
 
     embed = Embed.from_dict({
         "title": "Last update has been migrated",
         "description": f"**{commit_message}**",
         "color": 0x7289da,  # Discord blue color
         "fields": [
-            {"name": "Author", "value": commit_author, "inline": True},
+            {"name": "Author", "value": "Luxkatana", "inline": True},
         ],
         "footer": {"text": f"Repository: {REPO_NAME}"},
     })

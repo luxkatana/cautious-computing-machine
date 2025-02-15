@@ -195,13 +195,13 @@ async def on_ready() -> None:
         await channel.send(embed=discord.Embed(title="Bot cleanup", description="Beep boop started"), delete_after=10.0)
         mainloop.start()
     else:
-        raise BaseException("This isn't an error, but debugging mode is currently on, just so you know :)")
+        raise "This isn't an error, but debugging mode is currently on, just so you know :)"
 
 
 
 @bot.user_command(name="Get desolate deep bestiary", 
                   description="This will pull the desolate deep bestiary from the user, if applied")
-async def retrieve_from_desoalte(ctx: discord.ApplicationContext, user: discord.Member):
+async def retrieve_desolate(ctx: discord.ApplicationContext, user: discord.Member):
     if ctx.guild.get_role(HELPER_ROLE) not in ctx.author.roles:
         await ctx.respond("You're not allowed to do this.", ephemeral=True)
         return
