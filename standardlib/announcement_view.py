@@ -128,24 +128,26 @@ class AnnouncementView(View):
         permissions = {member: discord.PermissionOverwrite(read_messages=True, send_messages=True) for member in self.lists_of_people_joined + [self.current_helper]}
         permissions.update({guild.default_role: discord.PermissionOverwrite(read_messages=False)})
 
+        result = "\n".join(map(lambda member: f"<@{member.id}>", self.lists_of_people_joined + [self.current_helper]))
+        result = f'||{result}||'
 
         channel = await EVENTS.guild.create_text_channel(f"JOIN The trident event ({generate_nonce(10)})",
                                                          reason="Auto create trident channel",
                                                          slowmode_delay=5,
                                                          overwrites=permissions)
         next_time = int(time() + (30 * 60))
-        msg = (f"# For people who attended to this event\n> Please go to {channel.mention} for instructions\n"
+        msg = (f'{result}\n'
+               f"# For people who attended to this event\n> Please go to {channel.mention} for instructions\n"
               "# For people who didn't attend to this event and is waiting for the next trident-door event\n" 
                f"> Next event will be <t:{next_time}:t> (after 30 minutes)")
 
         await self.original_message.edit(content=msg, delete_after=30 * 60)
-        result = "\n".join(map(lambda member: f"<@{member.id}>", self.lists_of_people_joined + [self.current_helper]))
-        result = f'||{result}||'
         embed = discord.Embed(title="Welcome adventurers",
                               description=f"Welcome, this is the trident-door-opening event. Please do what {self.current_helper.mention} asks you to do", colour=discord.Color.gold())
         cancel_view = CancelView(self.current_helper)
         (status, display, username) = await parse_displayname_by_user(self.current_helper)
         if status is True:
+            print("PARSING DISPLAY NAME")
             userid = await Client().get_user_by_username(username)
             userid = userid.id
             cancel_view.add_item(discord.ui.Button(label=f"Visit {display} on roblox",

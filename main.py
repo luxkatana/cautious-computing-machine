@@ -2,6 +2,9 @@
 from datetime import datetime
 from io import BytesIO
 from re import search as regex_search
+from threading import Thread
+from httpx._exceptions import ConnectTimeout
+import subprocess
 from discord.ext import commands
 from standardlib import build_default_embed
 from standardlib.cancel_view import CancelView
@@ -29,7 +32,6 @@ DEBUGGING_MODE: bool = getnode() != 345045631689
 
 desolate_group = bot.create_group(name="helpers_application", description="Utilities for applying as a helper")
 
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 handler = logging.FileHandler("log.log")
@@ -49,9 +51,16 @@ def __eprint__(msg: str, *args, **kwargs):
 print = __print__
 eprint = __eprint__
 
+def hard_restart():
+    subprocess.run(["./apply_to_production.sh"])
 
 @bot.event
 async def on_error(exception: Exception, *args, **kwargs) -> None:
+    if isinstance(exception, ConnectTimeout): # Discord is down
+        eprint("Executing 'apply-to-production.sh' since timeout error")
+        Thread(target=hard_restart, daemon=True).start()
+        return
+
     channel = bot.get_channel(1323285527486529627)
     await channel.send("Exception occured:\n"
                        f"```{format_exc()}```")
