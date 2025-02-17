@@ -1,0 +1,16 @@
+[Unit]
+Description=Event hoster in python3
+DefaultDependencies=no
+After=network-online.target
+#Type=oneshot
+
+
+[Service]
+ExecStart=/home/bibi/pyenv/bin/python3 /home/bibi/cautious-computing-machine/main.py
+WorkingDirectory=/home/bibi/cautious-computing-machine/
+Restart=always
+RestartSec=2
+
+TimeoutStartSec=0
+[Install]
+WantedBy=default.target
