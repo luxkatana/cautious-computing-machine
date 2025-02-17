@@ -30,7 +30,10 @@ class ConfirmationView(View):
         already_has_role: discord.Role = (interaction
                                           .guild
                                     .get_role(1325150669568610335))
+
+        DOESNT_HAVE = interaction.guild.get_role(1341168113928114276)
         await interaction.user.add_roles(already_has_role)
+        await interaction.user.remove_roles(DOESNT_HAVE)
         await interaction.response.send_message(
                 "Catched that, great job!", 
                                                 ephemeral=True)
