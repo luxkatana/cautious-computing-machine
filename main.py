@@ -118,7 +118,7 @@ async def mainloop() -> None:
     embed = build_default_embed(ending_time, 0)
 
     interactionviews = AnnouncementView(bot, ending_time)
-    message = await EVENTS.send(embed=embed, view=interactionviews, content="||<@&1321786602778787870>||")
+    message = await EVENTS.send(embed=embed, view=interactionviews, content="||<@&1341168113928114276>||")
     interactionviews.original_message = message
 
     later = datetime.strptime(str(datetime.fromtimestamp(ending_time)), "%Y-%m-%d %H:%M:%S") 
