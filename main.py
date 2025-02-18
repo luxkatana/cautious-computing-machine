@@ -4,7 +4,6 @@ from io import BytesIO
 from re import search as regex_search
 from threading import Thread
 from httpx._exceptions import ConnectTimeout
-import subprocess
 from discord.ext import commands
 from standardlib import build_default_embed
 from standardlib.cancel_view import CancelView
@@ -12,13 +11,15 @@ from standardlib.announcement_view import AnnouncementView
 from standardlib.confirm_view import ConfirmationView, WaitingList
 from discord.ext import tasks
 from traceback import format_exc
-from asyncio import sleep as async_sleep
 from time import time
 from notify_update import notify_user
+from fastapi import FastAPI
 from constants import SPECIAL_SQUAD, EVENTS_CHANNEL, HELPER_ROLE, TRIDENT_TIME_TO_WAIT_IN_SECS
 from os import environ
 from dotenv import load_dotenv
 from uuid import getnode
+import asyncio
+import subprocess
 import logging
 import base64
 import discord
@@ -28,6 +29,17 @@ load_dotenv()
 
 TOKEN = environ['TOKEN']
 bot = commands.Bot(intents=discord.Intents.all(), debug_guilds=[1321602258038820936]) 
+API = FastAPI()
+@API.get("/count/trident_role")
+async def api_has_trident_role():
+    GUILD = bot.get_guild(1321602258038820936)
+    return {"count": len(GUILD.get_role(1325150669568610335).members)}
+
+@API.get("/count/not_trident_role")
+async def api_not_trident_role():
+    GUILD = bot.get_guild(1321602258038820936)
+    return {"count": len(GUILD.get_role(1341168113928114276).members)}
+
 DEBUGGING_MODE: bool = getnode() != 345045631689
 
 desolate_group = bot.create_group(name="helpers_application", description="Utilities for applying as a helper")
@@ -103,7 +115,7 @@ async def on_message(message: discord.Message):
         embed.set_footer(text="Please make sure to thank the helper for his help!")
 
         await message.channel.send(embed=embed)
-        await async_sleep(10)
+        await asyncio.sleep(10)
         await message.channel.delete(reason=f"Event finished, <@{message.author.id}> deleted by using delete command")
 
     await bot.process_commands(message)
@@ -129,7 +141,7 @@ async def mainloop() -> None:
     print(f"expected stopping: {later}")
     print(f"RN: {now}")
     print(f"waiting time: {time_to_wait}")
-    await async_sleep(time_to_wait)
+    await asyncio.sleep(time_to_wait)
     if bot.get_message(message.id) is None:
         return
     print("STARTING WITH EVENT, WAIT FINISH")
@@ -174,6 +186,7 @@ async def on_ready() -> None:
         return
 
     bot.connection = await aiosqlite.connect("./main.db")
+
 
     if DEBUGGING_MODE is False:
         await bot.change_presence(activity=discord.Game(name="Making events..."))
@@ -289,5 +302,11 @@ async def trial(ctx: discord.ApplicationContext, viewtype: str):
         else:
             await ctx.channel.send("Success")
 
-bot.run(TOKEN)
+async def run_bot() -> None:
+    try:
+        await bot.start(TOKEN)
+    except KeyboardInterrupt:
+        print("Exiting")
+    
+asyncio.create_task(run_bot())
 
