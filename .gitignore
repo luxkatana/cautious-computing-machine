@@ -3,3 +3,4 @@
 /standardlib/__pycache__
 /main.db
 /.env
+/counter/node_modules

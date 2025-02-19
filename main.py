@@ -7,14 +7,15 @@ from httpx._exceptions import ConnectTimeout
 from discord.ext import commands
 from standardlib import build_default_embed
 from standardlib.cancel_view import CancelView
+from json import dumps
+from websockets.asyncio.server import ServerConnection, serve
 from standardlib.announcement_view import AnnouncementView
 from standardlib.confirm_view import ConfirmationView, WaitingList
 from discord.ext import tasks
 from traceback import format_exc
 from time import time
 from notify_update import notify_user
-from fastapi import FastAPI
-from constants import SPECIAL_SQUAD, EVENTS_CHANNEL, HELPER_ROLE, TRIDENT_TIME_TO_WAIT_IN_SECS
+from constants import HAS_TRIDENT_ROLE, SPECIAL_SQUAD, EVENTS_CHANNEL, HELPER_ROLE, TRIDENT_TIME_TO_WAIT_IN_SECS, WS_PORT
 from os import environ
 from dotenv import load_dotenv
 from uuid import getnode
@@ -29,16 +30,26 @@ load_dotenv()
 
 TOKEN = environ['TOKEN']
 bot = commands.Bot(intents=discord.Intents.all(), debug_guilds=[1321602258038820936]) 
-API = FastAPI()
-@API.get("/count/trident_role")
-async def api_has_trident_role():
+ws_clients: set[ServerConnection] = set()
+async def ws_handler(ws: ServerConnection):
     GUILD = bot.get_guild(1321602258038820936)
-    return {"count": len(GUILD.get_role(1325150669568610335).members)}
+    try:
+        payload = {
+                "guild": GUILD.member_count,
+                "trident_role": len(GUILD.get_role(HAS_TRIDENT_ROLE).members),
+                "not_trident_role": len(GUILD.get_role(1341168113928114276).members)
+        }
+        await ws.send(dumps(payload)) 
+        ws_clients.add(ws)
+        async for _ in ws:
+            pass # to keep it on the server
+    except Exception as e:
+        ws_clients.remove(ws)
+        raise e
 
-@API.get("/count/not_trident_role")
-async def api_not_trident_role():
-    GUILD = bot.get_guild(1321602258038820936)
-    return {"count": len(GUILD.get_role(1341168113928114276).members)}
+async def ws_main() -> None:
+    async with serve(ws_handler, "0.0.0.0", WS_PORT) as server:
+        await server.serve_forever()
 
 DEBUGGING_MODE: bool = getnode() != 345045631689
 
@@ -302,11 +313,31 @@ async def trial(ctx: discord.ApplicationContext, viewtype: str):
         else:
             await ctx.channel.send("Success")
 
-async def run_bot() -> None:
-    try:
-        await bot.start(TOKEN)
-    except KeyboardInterrupt:
-        print("Exiting")
+async def main():
+    bot_task = asyncio.create_task(bot.start(TOKEN))
+    ws_task = asyncio.create_task(ws_main())
+    await asyncio.gather(bot_task, ws_task)
     
-asyncio.create_task(run_bot())
+@bot.event
+async def on_member_join(member: discord.Member):
+    bot.on_member_update(member, None)
+
+@bot.event
+async def on_member_remove(member: discord.Member):
+    bot.on_member_update(member, None)
+
+@bot.event
+async def on_member_update(before: discord.Member, after: discord.Member):
+    payload = dumps({
+            "guild": before.guild.member_count,
+            "trident_role": len(before.guild.get_role(HAS_TRIDENT_ROLE).members),
+            "not_trident_role": len(before.guild.get_role(1341168113928114276).members)
+    })
+    print("oke")
+    for client in ws_clients:
+        await client.send(payload)
+
+
+asyncio.run(main())
+
 
