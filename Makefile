@@ -6,4 +6,5 @@ build:
 	cd counter
 	npm run build
 	sudo mv build/* /var/www/chinesespypigeon.lol/dcounter
+	sudo systemctl reload apache2
 
