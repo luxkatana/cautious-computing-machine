@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import useWebsocket from "react-use-websocket";
 function App() {
     var [parsedJSON, setparsedJSON] = useState(JSON.parse("{}"));
-    const {lastMessage} = useWebsocket("ws.trident.chinesespypigeon.lol",{
-        share: false,
+    const {lastMessage} = useWebsocket("ws://ws.trident.chinesespypigeon.lol",{
+        share: true,
         shouldReconnect: () => true
     });
     useEffect(function() {
