@@ -45,7 +45,7 @@ async def ws_handler(ws: ServerConnection):
             pass # to keep it on the server
     except Exception as e:
         ws_clients.remove(ws)
-        raise e
+        eprint(e)
 
 async def ws_main() -> None:
     async with serve(ws_handler, "0.0.0.0", WS_PORT) as server:
@@ -285,9 +285,8 @@ async def read_logs(ctx: discord.ApplicationContext):
     await ctx.defer()
     try:
         with open("./log.log", 'r') as file:
-            data = file.read()
+            data = file.read()[:10]
         await ctx.respond(data)
-
 
     except Exception:
         await ctx.respond("log.log file doesn't exist, therefore it's not possible to read it", ephemeral=True)
@@ -320,11 +319,11 @@ async def main():
     
 @bot.event
 async def on_member_join(member: discord.Member):
-    bot.on_member_update(member, None)
+    await bot.on_member_update(member, None)
 
 @bot.event
 async def on_member_remove(member: discord.Member):
-    bot.on_member_update(member, None)
+    await bot.on_member_update(member, None)
 
 @bot.event
 async def on_member_update(before: discord.Member, after: discord.Member):
@@ -333,10 +332,11 @@ async def on_member_update(before: discord.Member, after: discord.Member):
             "trident_role": len(before.guild.get_role(HAS_TRIDENT_ROLE).members),
             "not_trident_role": len(before.guild.get_role(1341168113928114276).members)
     })
-    print("oke")
     for client in ws_clients:
-        await client.send(payload)
-
+        try:
+            await client.send(payload)
+        except Exception as e:
+            eprint(f"had to raise while broadcasting: {e}")
 
 asyncio.run(main())
 
