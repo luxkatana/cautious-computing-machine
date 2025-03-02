@@ -79,6 +79,11 @@ class AnnouncementView(View):
             embed.color = discord.Color.blue()
             await interaction.response.send_message(embed=embed, ephemeral=True)
             await self.update_embed_counting()
+            # Sending a notification to some specific channel
+            if self.current_helper is None:
+                notification_channel = self.bot.get_channel(1345532382689628263)
+                await notification_channel.send("<@&1321615619640135731>, Someone joined the event, go assign now!")
+
 
     @discord.ui.button(label="See who is going to join", style=discord.ButtonStyle.secondary, custom_id="list_users")
     async def list_users(self, _, interaction: discord.Interaction) -> None:
