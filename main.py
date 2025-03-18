@@ -22,9 +22,7 @@ from uuid import getnode
 import asyncio
 import subprocess
 import logging
-import base64
 import discord
-import aiosqlite
 load_dotenv()
 
 
@@ -53,7 +51,6 @@ async def ws_main() -> None:
 
 DEBUGGING_MODE: bool = getnode() != 345045631689
 
-desolate_group = bot.create_group(name="helpers_application", description="Utilities for applying as a helper")
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -196,9 +193,6 @@ async def on_ready() -> None:
     else:
         return
 
-    bot.connection = await aiosqlite.connect("./main.db")
-
-
     if DEBUGGING_MODE is False:
         await bot.change_presence(activity=discord.Game(name="Making events..."))
     else:
@@ -229,53 +223,6 @@ async def on_ready() -> None:
         mainloop.start()
     else:
         raise "This isn't an error, but debugging mode is currently on, just so you know :)"
-
-
-
-@bot.user_command(name="Get desolate deep bestiary", 
-                  description="This will pull the desolate deep bestiary from the user, if applied")
-async def retrieve_desolate(ctx: discord.ApplicationContext, user: discord.Member):
-    if ctx.guild.get_role(HELPER_ROLE) not in ctx.author.roles:
-        await ctx.respond("You're not allowed to do this.", ephemeral=True)
-        return
-    cursor: aiosqlite.Cursor = await bot.connection.cursor()
-    await cursor.execute("SELECT image FROM desolatebs WHERE USERID=?", (user.id,))
-    fetch = await cursor.fetchone()
-    if fetch is None:
-        await ctx.respond("User did not submit yet a desolate deep bestiary.", ephemeral=True)
-    else:
-        fetch = tuple(fetch)
-        decoded_content = base64.b64decode(fetch[0].encode())
-        io = BytesIO(decoded_content)
-        await ctx.respond(f"Image supplied by {user.mention}", file=discord.File(fp=io, filename="holyfimcmlois.jpg"))
-
-
-@desolate_group.command(name="submit_desolate_bestiary", 
-                        description="This will submit your desolate deep bestiary for the helpers application")
-@discord.option(name="image", input_type=discord.Attachment, required=True)
-async def submit_desolate(ctx: discord.ApplicationContext,
-                          image: discord.Attachment):
-    if ctx.guild.get_role(HELPER_ROLE) in ctx.author.roles:
-        await ctx.respond("This is not for helpers, this is for people that are applying", ephemeral=True)
-        return
-
-    if not image.content_type.startswith("image/"):
-        await ctx.respond("Attachment is not a valid image.", ephemeral=True)
-        return
-
-    encoded_data: str = base64.b64encode(await image.read()).decode()
-    cursor: aiosqlite.Cursor = await bot.connection.cursor()
-    await cursor.execute("SELECT COUNT(*) FROM desolatebs WHERE USERID=?;", (ctx.author.id,))
-    result = await cursor.fetchone()
-
-    if tuple(result)[0] == 0: # doesnt exist, create new
-        await cursor.execute("INSERT INTO desolatebs(USERID, image) VALUES (?, ?)", (ctx.author.id, encoded_data))
-    else:
-        await cursor.execute("UPDATE desolatebs SET image=? WHERE USERID=?", (encoded_data, ctx.author.id))
-
-    await bot.connection.commit()
-    await cursor.close()
-    await ctx.respond("Succesfully submitted desolate deep bestiary.", file=await image.to_file(), ephemeral=True)
 
 @bot.slash_command(name="seelogs", description="Read logger handler")
 async def read_logs(ctx: discord.ApplicationContext):
