@@ -247,7 +247,7 @@ async def listhelpers(ctx: discord.ApplicationContext):
             else:
                 prefix = f"{index}th"
 
-            current_embed.add_field(name=f"{u'\u2B0C'}{user.display_name} - {prefix} place", 
+            current_embed.add_field(name=f"\u2B0C{user.display_name} - {prefix} place", 
                                     value=f"Amount of times helped: **{helper.amount_of_times_helped}**",
                                     inline=False)
         pages.append(current_embed)
