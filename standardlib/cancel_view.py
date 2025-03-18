@@ -1,8 +1,12 @@
 
 from discord.ui import View
 import discord
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import select
 from standardlib.confirm_view import WaitingList, ConfirmationView
 from constants import SPECIAL_SQUAD, HELPER_ROLE
+from . import models
+from . import database
 
 class CancelView(View):
     def __init__(self,
@@ -41,6 +45,16 @@ class CancelView(View):
         try:
             await confirmations.wait_for(count, 3 * 60)
         except Exception: ...
+        async for db in database.get_db():
+            db: AsyncSession
+            helper = await db.execute(select(models.Helper).filter(models.Helper.user_id == self.helper.id))
+            helper = helper.scalar().first()
+            helper.amount_of_times_helped += 1
+            await db.commit()
+            channel = interaction.guild.get_channel(1321622294388412480)
+            await channel.send(f"Helper {self.helper.mention} has helped {helper.amount_of_times_helped} times",
+                               delete_after=60.0)
+
 
         await interaction.channel.delete(reason=f"Event finished, <@{interaction.user.id}> clicked this button")
 

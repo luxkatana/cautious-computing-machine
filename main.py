@@ -4,10 +4,14 @@ from re import search as regex_search
 from threading import Thread
 from httpx._exceptions import ConnectTimeout
 from discord.ext import commands
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import select
 from standardlib import build_default_embed
 from standardlib.cancel_view import CancelView
+from standardlib.database import get_db
+from discord.ext.pages import Paginator
+from standardlib.models import Helper
 from standardlib.announcement_view import AnnouncementView
-from standardlib.confirm_view import ConfirmationView, WaitingList
 from discord.ext import tasks
 from traceback import format_exc
 from time import time
@@ -25,6 +29,7 @@ load_dotenv()
 
 TOKEN = environ['TOKEN']
 bot = commands.Bot(intents=discord.Intents.all(), debug_guilds=[1321602258038820936]) 
+progress = bot.create_group("progress", "Progress for helpers")
 
 DEBUGGING_MODE: bool = getnode() != 345045631689
 
@@ -70,11 +75,12 @@ async def on_application_command_error(
     exception: Exception):
     await ctx.respond("Error occured while applying", ephemeral=True)
     channel = bot.get_channel(1323285527486529627)
-    try:
+    if len(exception) < 4000:
         await channel.send(f"raw: {exception}")
         await channel.send("Exception occured:\n"
                            f"```{format_exc()}```")
-    except Exception: ...
+    else:
+        await channel.send(f"raw (truncated): {exception[:3900]}")
     eprint(exception)
     raise exception
 
@@ -216,26 +222,36 @@ async def read_logs(ctx: discord.ApplicationContext):
     except Exception:
         await ctx.respond("log.log file doesn't exist, therefore it's not possible to read it", ephemeral=True)
 
+@progress.command(name="listhelpers", description="List all helpers with it's stats")
+async def listhelpers(ctx: discord.ApplicationContext):
+    pages: list[discord.Embed] = []
+    async for db in get_db():
+        db: AsyncSession
+        helpers = await db.execute(select(Helper).order_by(Helper.amount_of_times_helped.desc()))
+        current_embed = discord.Embed(title="Helpers", 
+                                      description="List of all helpers", 
+                                      color=discord.Color.green())
+        for (index, helper) in enumerate(helpers.scalars().all(), start=1):
+            user = bot.get_user(helper.DISCORD_ID)
+            if len(current_embed.fields) > 25:
+                pages.append(current_embed)
+                current_embed = discord.Embed(title="Helpers", 
+                                              description="List of all helpers", 
+                                              color=discord.Color.green())
 
-@bot.slash_command(name="trial", description="Preview a view")
-@discord.option(name="viewtype", input_type=str, choices=["cancel_view", "confirm_view"])
-async def trial(ctx: discord.ApplicationContext, viewtype: str):
-    if ctx.author.id not in SPECIAL_SQUAD:
-        await ctx.respond("not for you", ephemeral=True)
-        return
-    if viewtype == "cancel_view":
-        view = CancelView(ctx.author)
-        await ctx.respond("Follow the blah blah (just know that it could actually do stuff)", view=view)
-    else:
-        waitinglist = WaitingList()
-        view = ConfirmationView(ctx.author, waitinglist)
-        await ctx.respond("Got the trident role lil bro (this is cringe)?", view=view)
-        try:
-            await waitinglist.wait_for(1, 3 * 60)
-        except Exception:
-            await ctx.channel.send("Not sent on time (timeout reached)")
-        else:
-            await ctx.channel.send("Success")
+            prefix = f"{index}st"
+            if index == 2:
+                prefix = f"{index}nd"
+            elif index == 3:
+                prefix = f"{index}rd"
+            else:
+                prefix = f"{index}th"
 
+            current_embed.add_field(name=f"{u'\u2B0C'}{user.display_name} - {prefix} place", 
+                                    value=f"Amount of times helped: **{helper.amount_of_times_helped}**",
+                                    inline=False)
+        pages.append(current_embed)
+
+    await Paginator(pages).respond(ctx.interaction)
 bot.run(TOKEN)
 
