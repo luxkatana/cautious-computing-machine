@@ -47,7 +47,7 @@ class CancelView(View):
         except Exception: ...
         async for db in database.get_db():
             db: AsyncSession
-            helper = await db.execute(select(models.Helper).filter(models.Helper.user_id == self.helper.id))
+            helper = await db.execute(select(models.Helper).filter(models.Helper.DISCORD_ID == self.helper.id))
             helper = helper.scalar().first()
             helper.amount_of_times_helped += 1
             await db.commit()
