@@ -1,8 +1,0 @@
-{
-  "short_name": "Trident server counter",
-  "name": "Trident server member counter",
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#FCBA03",
-  "background_color": "#7969B6"
-}

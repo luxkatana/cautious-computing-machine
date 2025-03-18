@@ -1,4 +1,0 @@
-CREATE TABLE IF NOT EXISTS desolatebs(
-    USERID INT NOT NULL,
-    image TEXT NOT NULL
-);
