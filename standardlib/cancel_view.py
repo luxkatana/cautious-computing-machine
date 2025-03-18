@@ -48,7 +48,7 @@ class CancelView(View):
         async for db in database.get_db():
             db: AsyncSession
             helper = await db.execute(select(models.Helper).filter(models.Helper.DISCORD_ID == self.helper.id))
-            helper = helper.scalar().first()
+            helper = helper.scalar()
             helper.amount_of_times_helped += 1
             await db.commit()
             channel = interaction.guild.get_channel(1321622294388412480)
