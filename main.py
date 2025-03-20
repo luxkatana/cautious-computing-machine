@@ -277,7 +277,7 @@ async def on_member_update(before: discord.Member, after: discord.Member):
         elif is_in_before is False and is_in_after is True: # new
             helper = Helper(DISCORD_ID=before.id, amount_of_times_helped=0)
             db.add(helper)
-            await db.commit()
+        await db.commit()
 
 
 
