@@ -87,11 +87,12 @@ async def on_application_command_error(
 ):
     await ctx.respond("Error occured while applying", ephemeral=True)
     channel = bot.get_channel(1323285527486529627)
-    if len(exception) < 4000:
-        await channel.send(f"raw: {exception}")
-        await channel.send(f"Exception occured:\n```{format_exc()}```")
+    formatted = format_exc()
+    if len(formatted) > 4000:
+        await channel.send("raw (truncated): ", formatted[:3500])
     else:
-        await channel.send(f"raw (truncated): {exception[:3900]}")
+        await channel.send(f"raw (truncated): {formatted}")
+
     eprint(exception)
     raise exception
 
@@ -320,6 +321,5 @@ async def listhelpers(ctx: discord.ApplicationContext):
         pages.append(current_embed)
 
     await Paginator(pages).respond(ctx.interaction)
-
 
 bot.run(TOKEN)

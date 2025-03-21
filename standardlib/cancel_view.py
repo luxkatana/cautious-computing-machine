@@ -5,8 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import select
 from standardlib.confirm_view import WaitingList, ConfirmationView
 from constants import SPECIAL_SQUAD, HELPER_ROLE
-from . import models
-from . import database
+from standardlib.models import Helper
+from standardlib.database import get_db
 
 class CancelView(View):
     def __init__(self,
@@ -45,9 +45,9 @@ class CancelView(View):
         try:
             await confirmations.wait_for(count, 3 * 60)
         except Exception: ...
-        async for db in database.get_db():
+        async for db in get_db():
             db: AsyncSession
-            helper = await db.execute(select(models.Helper).filter(models.Helper.DISCORD_ID == self.helper.id))
+            helper = await db.execute(select(Helper).filter(Helper.DISCORD_ID == self.helper.id))
             helper = helper.scalar()
             helper.amount_of_times_helped += 1
             await db.commit()
